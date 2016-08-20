@@ -121,5 +121,34 @@
         /// DeltaNeutralConId
         /// </summary>
         public const int DeltaNeutralConId = 58;
+
+        /// <summary>
+        /// 
+        /// </summary>
+        public const int ScaleOrders3 = 60;
+        /// <summary>
+        /// 
+        /// </summary>
+        public const int OrdercomboLegsPrice = 61;
+        /// <summary>
+        /// 
+        /// </summary>
+        public const int TrailingPercent = 62;
+        public const int DeltaNeutralOpenClose = 66;
+        public const int AcctSummary = 67;
+        public const int TradingClass = 68;
+        public const int ScaleTable = 69;
+        public const int Linking = 70;
+        public const int AlgoID = 71;
+        public const int OptionalCapabilities = 72;
+        public const int OrderSolicited = 73;
+        public const int LinkingAuth = 74; //NOT IMPLEMENTED - it's for verifyAndAuthRequest and verifyAndAuthMessage
+        public const int Primaryexch = 75;
+        public const int RandomizeSizeAndPrice = 76;
+        public const int FractionalPositions = 101;
+        public const int PeggedToBenchmark = 102;
+        public const int ModelsSupport = 103;
+        public const int SecDefOptParamsReq = 104;
+        public const int ExtOperator = 105;
     }
 }

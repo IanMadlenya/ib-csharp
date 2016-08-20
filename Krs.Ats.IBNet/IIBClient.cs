@@ -1,15 +1,24 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading;
 
 namespace Krs.Ats.IBNet
 {
+    /// <summary>
+    /// 
+    /// </summary>
     public interface IIBClient
     {
         /// <summary>
         /// This event is called when the market data changes. Prices are updated immediately with no delay.
         /// </summary>
         event EventHandler<TickPriceEventArgs> TickPrice;
+
+        /// <summary>
+        /// Called on a position call back.
+        /// </summary>
+        event EventHandler<PositionEventArgs> Position;
 
         /// <summary>
         /// This event is called when the market data changes. Sizes are updated immediately with no delay.
@@ -203,6 +212,56 @@ namespace Krs.Ats.IBNet
         event EventHandler<TickSnapshotEndEventArgs> TickSnapshotEnd;
 
         /// <summary>
+        /// provides the portfolio's open positions.
+        /// </summary>
+        event EventHandler<PositionMultiEventArgs> PositionMulti;
+
+        /// <summary>
+        /// Indicates all the positions have been transmitted.
+        /// </summary>
+        event EventHandler<PositionMultiEndEventArgs> PositionMultiEnd;
+
+        /// <summary>
+        /// call triggered once after receiving the subscription request, and will be sent again if the selected contract in the subscribed * display group has changed.
+        /// </summary>
+        event EventHandler<DisplayGroupUpdatedEventArgs> DisplayGroupUpdated;
+
+        /// <summary>
+        /// a one-time response to querying the display groups
+        /// </summary>
+        event EventHandler<DisplayGroupListEventArgs> DisplayGroupList;
+
+        /// <summary>
+        /// called when all callbacks to securityDefinitionOptionParameter are complete
+        /// </summary>
+        event EventHandler<SecurityDefinitionParameterEndEventArgs> SecurityDefinitionParameterEnd;
+
+        /// <summary>
+        /// returns the option chain for an underlying on an exchange specified in reqSecDefOptParams There will be multiple callbacks to securityDefinitionOptionParameter if multiple exchanges are specified in reqSecDefOptParams
+        /// </summary>
+        event EventHandler<SecurityDefinitionParameterEventArgs> SecurityDefinitionParameter;
+
+        /// <summary>
+        /// Indicates all the account updates have been transmitted.
+        /// </summary>
+        event EventHandler<AccountUpdateMultiEndEventArgs> AccountUpdateMultiEnd;
+
+        /// <summary>
+        /// provides the account updates
+        /// </summary>
+        event EventHandler<AccountUpdateMultiEventArgs> AccountUpdateMulti;
+
+        /// <summary>
+        /// Receives the account information. This method will receive the account information just as it appears in the TWS' Account Summary Window. 
+        /// </summary>
+        event EventHandler<AccountSummaryEventArgs> AccountSummary;
+
+        /// <summary>
+        /// notifies when all the accounts' information has ben received.
+        /// </summary>
+        event EventHandler<AccountSummaryEndEventArgs> AccountSummaryEnd;
+
+        /// <summary>
         /// Used to control the exception handling.
         /// If true, all exceptions are thrown, else only throw non network exceptions.
         /// </summary>
@@ -274,7 +333,8 @@ namespace Krs.Ats.IBNet
         /// </summary>
         /// <param name="tickerId">the Id for the subscription. Must be a unique value. When the subscription  data is received, it will be identified by this Id. This is also used when canceling the scanner.</param>
         /// <param name="subscription">summary of the scanner subscription parameters including filters.</param>
-        void RequestScannerSubscription(int tickerId, ScannerSubscription subscription);
+        /// <param name="scannerSubscriptionOptions"></param>
+        void RequestScannerSubscription(int tickerId, ScannerSubscription subscription, List<TagValue> scannerSubscriptionOptions = null);
 
         /// <summary>
         /// Call this method to request market data. The market data will be returned by the tickPrice, tickSize, tickOptionComputation(), tickGeneric(), tickString() and tickEFP() methods.
@@ -284,7 +344,8 @@ namespace Krs.Ats.IBNet
         /// <param name="genericTickList">comma delimited list of generic tick types.  Tick types can be found here: (new Generic Tick Types page) </param>
         /// <param name="snapshot">Allows client to request snapshot market data.</param>
         /// <param name="marketDataOff">Market Data Off - used in conjunction with RTVolume Generic tick type causes only volume data to be sent.</param>
-        void RequestMarketData(int tickerId, Contract contract, Collection<GenericTickType> genericTickList, bool snapshot, bool marketDataOff);
+        /// <param name="mktDataOptions"></param>
+        void RequestMarketData(int tickerId, Contract contract, Collection<GenericTickType> genericTickList, bool snapshot, bool marketDataOff, List<TagValue> mktDataOptions = null);
 
         /// <summary>
         /// Call the CancelHistoricalData method to stop receiving historical data results.
@@ -299,103 +360,159 @@ namespace Krs.Ats.IBNet
         void CancelRealTimeBars(int tickerId);
 
         /// <summary>
-        /// Call the reqHistoricalData() method to start receiving historical data results through the historicalData() EWrapper method. 
+        /// Integrates API client and TWS window grouping. 
         /// </summary>
-        /// <param name="tickerId">the Id for the request. Must be a unique value. When the data is received, it will be identified by this Id. This is also used when canceling the historical data request.</param>
-        /// <param name="contract">this structure contains a description of the contract for which market data is being requested.</param>
-        /// <param name="endDateTime">Date is sent after a .ToUniversalTime, so make sure the kind property is set correctly, and assumes GMT timezone. Use the format yyyymmdd hh:mm:ss tmz, where the time zone is allowed (optionally) after a space at the end.</param>
-        /// <param name="duration">This is the time span the request will cover, and is specified using the format:
-        /// <integer /> <unit />, i.e., 1 D, where valid units are:
-        /// S (seconds)
-        /// D (days)
-        /// W (weeks)
-        /// M (months)
-        /// Y (years)
-        /// If no unit is specified, seconds are used. "years" is currently limited to one.
-        /// </param>
-        /// <param name="barSizeSetting">
-        /// specifies the size of the bars that will be returned (within IB/TWS limits). Valid values include:
-        /// <list type="table">
-        /// <listheader>
-        ///     <term>Bar Size</term>
-        ///     <description>Parametric Value</description>
-        /// </listheader>
-        /// <item>
-        ///     <term>1 sec</term>
-        ///     <description>1</description>
-        /// </item>
-        /// <item>
-        ///     <term>5 secs</term>
-        ///     <description>2</description>
-        /// </item>
-        /// <item>
-        ///     <term>15 secs</term>
-        ///     <description>3</description>
-        /// </item>
-        /// <item>
-        ///     <term>30 secs</term>
-        ///     <description>4</description>
-        /// </item>
-        /// <item>
-        ///     <term>1 min</term>
-        ///     <description>5</description>
-        /// </item>
-        /// <item>
-        ///     <term>2 mins</term>
-        ///     <description>6</description>
-        /// </item>
-        /// <item>
-        ///     <term>5 mins</term>
-        ///     <description>7</description>
-        /// </item>
-        /// <item>
-        ///     <term>15 mins</term>
-        ///     <description>8</description>
-        /// </item>
-        /// <item>
-        ///     <term>30 mins</term>
-        ///     <description>9</description>
-        /// </item>
-        /// <item>
-        ///     <term>1 hour</term>
-        ///     <description>10</description>
-        /// </item>
-        /// <item>
-        ///     <term>1 day</term>
-        ///     <description>11</description>
-        /// </item>
-        /// <item>
-        ///     <term>1 week</term>
-        ///     <description></description>
-        /// </item>
-        /// <item>
-        ///     <term>1 month</term>
-        ///     <description></description>
-        /// </item>
-        /// <item>
-        ///     <term>3 months</term>
-        ///     <description></description>
-        /// </item>
-        /// <item>
-        ///     <term>1 year</term>
-        ///     <description></description>
-        /// </item>
-        /// </list>
-        /// </param>
-        /// <param name="whatToShow">determines the nature of data being extracted. Valid values include:
-        /// TRADES
-        /// MIDPOINT
-        /// BID
-        /// ASK
-        /// BID/ASK
-        /// </param>
-        /// <param name="useRth">
-        /// determines whether to return all data available during the requested time span, or only data that falls within regular trading hours. Valid values include:
-        /// 0 - all data is returned even where the market in question was outside of its regular trading hours.
-        /// 1 - only data within the regular trading hours is returned, even if the requested time span falls partially or completely outside of the RTH.
-        /// </param>
-        void RequestHistoricalData(int tickerId, Contract contract, DateTime endDateTime, TimeSpan duration,
-            BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth);
+        /// <param name="requestId">requestId is the Id chosen for this subscription request</param>
+        /// <param name="groupId">groupId is the display group for integration</param>
+        void SubscribeToGroupEvents(int requestId, int groupId);
+
+        /// <summary>
+        /// Cancels a TWS Window Group subscription
+        /// </summary>
+        /// <param name="requestId">requestId is the Id chosen for this subscription request</param>
+        void UnsubscribeFromGroupEvents(int requestId);
+
+        /// <summary>
+        /// Requests all available Display Groups in TWS
+        /// </summary>
+        /// <param name="requestId"></param>
+        void RequestDisplayGroups(int requestId);
+
+        /// <summary>
+        /// Updates the contract displayed in a TWS Window Group
+        /// </summary>
+        /// <param name="requestId">requestId is the ID chosen for this request</param>
+        /// <param name="contractInfo">contractInfo is an encoded value designating a unique IB contract. Possible values include:
+        /// 1. none = empty selection
+        /// 2. contractID @exchange - any non-combination contract.Examples 8314@SMART for IBM SMART; 8314@ARCA for IBM ARCA
+        /// 3. combo= if any combo is selected
+        /// Note: This request from the API does not get a TWS response unless an error occurs. </param>
+        void UpdateDisplayGroup(int requestId, string contractInfo);
+
+        /// <summary>
+        /// Requests account updates for account and/or model
+        /// </summary>
+        /// <param name="requestId"></param>
+        /// <param name="account"></param>
+        /// <param name="modelCode"></param>
+        /// <param name="ledgerAndNLV"></param>
+        void RequestAccountUpdatesMulti(int requestId, string account, string modelCode, bool ledgerAndNLV);
+
+        /// <summary>
+        /// Cancels account updates request for account and/or model
+        /// </summary>
+        /// <param name="requestId"></param>
+        void CancelAccountUpdatesMulti(int requestId);
+
+        /// <summary>
+        /// Requests security definition option parameters for viewing a contract's option chain
+        /// </summary>
+        /// <param name="reqId">reqId the ID chosen for the request</param>
+        /// <param name="underlyingSymbol">underlyingSymbol</param>
+        /// <param name="futFopExchange">futFopExchange The exchange on which the returned options are trading. Can be set to the empty string "" for all exchanges.</param>
+        /// <param name="underlyingSecType">underlyingSecType The type of the underlying security, i.e. STK</param>
+        /// <param name="underlyingConId">underlyingConId the contract ID of the underlying security</param>
+        void RequestSecurityDefinitionOptionParams(int reqId, string underlyingSymbol, string futFopExchange, string underlyingSecType, int underlyingConId);
+
+            /// <summary>
+            /// Call the reqHistoricalData() method to start receiving historical data results through the historicalData() EWrapper method. 
+            /// </summary>
+            /// <param name="tickerId">the Id for the request. Must be a unique value. When the data is received, it will be identified by this Id. This is also used when canceling the historical data request.</param>
+            /// <param name="contract">this structure contains a description of the contract for which market data is being requested.</param>
+            /// <param name="endDateTime">Date is sent after a .ToUniversalTime, so make sure the kind property is set correctly, and assumes GMT timezone. Use the format yyyymmdd hh:mm:ss tmz, where the time zone is allowed (optionally) after a space at the end.</param>
+            /// <param name="duration">This is the time span the request will cover, and is specified using the format:
+            /// <integer /> <unit />, i.e., 1 D, where valid units are:
+            /// S (seconds)
+            /// D (days)
+            /// W (weeks)
+            /// M (months)
+            /// Y (years)
+            /// If no unit is specified, seconds are used. "years" is currently limited to one.
+            /// </param>
+            /// <param name="barSizeSetting">
+            /// specifies the size of the bars that will be returned (within IB/TWS limits). Valid values include:
+            /// <list type="table">
+            /// <listheader>
+            ///     <term>Bar Size</term>
+            ///     <description>Parametric Value</description>
+            /// </listheader>
+            /// <item>
+            ///     <term>1 sec</term>
+            ///     <description>1</description>
+            /// </item>
+            /// <item>
+            ///     <term>5 secs</term>
+            ///     <description>2</description>
+            /// </item>
+            /// <item>
+            ///     <term>15 secs</term>
+            ///     <description>3</description>
+            /// </item>
+            /// <item>
+            ///     <term>30 secs</term>
+            ///     <description>4</description>
+            /// </item>
+            /// <item>
+            ///     <term>1 min</term>
+            ///     <description>5</description>
+            /// </item>
+            /// <item>
+            ///     <term>2 mins</term>
+            ///     <description>6</description>
+            /// </item>
+            /// <item>
+            ///     <term>5 mins</term>
+            ///     <description>7</description>
+            /// </item>
+            /// <item>
+            ///     <term>15 mins</term>
+            ///     <description>8</description>
+            /// </item>
+            /// <item>
+            ///     <term>30 mins</term>
+            ///     <description>9</description>
+            /// </item>
+            /// <item>
+            ///     <term>1 hour</term>
+            ///     <description>10</description>
+            /// </item>
+            /// <item>
+            ///     <term>1 day</term>
+            ///     <description>11</description>
+            /// </item>
+            /// <item>
+            ///     <term>1 week</term>
+            ///     <description></description>
+            /// </item>
+            /// <item>
+            ///     <term>1 month</term>
+            ///     <description></description>
+            /// </item>
+            /// <item>
+            ///     <term>3 months</term>
+            ///     <description></description>
+            /// </item>
+            /// <item>
+            ///     <term>1 year</term>
+            ///     <description></description>
+            /// </item>
+            /// </list>
+            /// </param>
+            /// <param name="whatToShow">determines the nature of data being extracted. Valid values include:
+            /// TRADES
+            /// MIDPOINT
+            /// BID
+            /// ASK
+            /// BID/ASK
+            /// </param>
+            /// <param name="useRth">
+            /// determines whether to return all data available during the requested time span, or only data that falls within regular trading hours. Valid values include:
+            /// 0 - all data is returned even where the market in question was outside of its regular trading hours.
+            /// 1 - only data within the regular trading hours is returned, even if the requested time span falls partially or completely outside of the RTH.
+            /// </param>
+            /// <param name="chartOptions"></param>
+            void RequestHistoricalData(int tickerId, Contract contract, DateTime endDateTime, TimeSpan duration,
+            BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth, List<TagValue> chartOptions = null);
 
         /// <summary>
         /// Call the reqHistoricalData() method to start receiving historical data results through the historicalData() EWrapper method. 
@@ -493,8 +610,9 @@ namespace Krs.Ats.IBNet
         /// 0 - all data is returned even where the market in question was outside of its regular trading hours.
         /// 1 - only data within the regular trading hours is returned, even if the requested time span falls partially or completely outside of the RTH.
         /// </param>
+        /// <param name="chartOptions"></param>
         void RequestHistoricalData(int tickerId, Contract contract, DateTime endDateTime, string duration,
-            BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth);
+            BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth, List<TagValue> chartOptions = null);
 
         /// <summary>
         /// Call this function to download all details for a particular underlying. the contract details will be received via the contractDetails() function on the EWrapper.
@@ -520,7 +638,8 @@ namespace Krs.Ats.IBNet
         /// 0 = all data available during the time span requested is returned, including time intervals when the market in question was outside of regular trading hours.
         /// 1 = only data within the regular trading hours for the product requested is returned, even if the time time span falls partially or completely outside.
         /// </param>
-        void RequestRealTimeBars(int tickerId, Contract contract, int barSize, RealTimeBarType whatToShow, bool useRth);
+        /// <param name="realTimeBarsOptions"></param>
+        void RequestRealTimeBars(int tickerId, Contract contract, int barSize, RealTimeBarType whatToShow, bool useRth, List<TagValue> realTimeBarsOptions = null);
 
         /// <summary>
         /// Call this method to request market depth for a specific contract. The market depth will be returned by the updateMktDepth() and updateMktDepthL2() methods.
@@ -528,7 +647,8 @@ namespace Krs.Ats.IBNet
         /// <param name="tickerId">the ticker Id. Must be a unique value. When the market depth data returns, it will be identified by this tag. This is also used when canceling the market depth.</param>
         /// <param name="contract">this structure contains a description of the contract for which market depth data is being requested.</param>
         /// <param name="numberOfRows">specifies the number of market depth rows to return.</param>
-        void RequestMarketDepth(int tickerId, Contract contract, int numberOfRows);
+        /// <param name="mktDepthOptions"></param>
+        void RequestMarketDepth(int tickerId, Contract contract, int numberOfRows, List<TagValue> mktDepthOptions = null);
 
         /// <summary>
         /// After calling this method, market data for the specified Id will stop flowing.
@@ -673,7 +793,8 @@ namespace Krs.Ats.IBNet
         /// <param name="requestId">Request Id</param>
         /// <param name="contract">Contract to request fundamental data for</param>
         /// <param name="reportType">Report Type</param>
-        void RequestFundamentalData(int requestId, Contract contract, String reportType);
+        /// <param name="fundamentalDataOptions"></param>
+        void RequestFundamentalData(int requestId, Contract contract, String reportType, List<TagValue> fundamentalDataOptions = null);
 
         /// <summary>
         /// Call this method to stop receiving Reuters global fundamental data.
@@ -695,7 +816,8 @@ namespace Krs.Ats.IBNet
         /// <param name="contract">Contract</param>
         /// <param name="optionPrice">Price of the option</param>
         /// <param name="underPrice">Price of teh underlying of the option</param>
-        void RequestCalculateImpliedVolatility(int requestId, Contract contract, double optionPrice, double underPrice);
+        /// <param name="impliedVolatilityOptions"></param>
+        void RequestCalculateImpliedVolatility(int requestId, Contract contract, double optionPrice, double underPrice, List<TagValue> impliedVolatilityOptions = null);
 
         /// <summary>
         /// Call this function to calculate option price and greek values for a supplied volatility and underlying price.
@@ -704,8 +826,9 @@ namespace Krs.Ats.IBNet
         /// <param name="contract">Describes the contract.</param>
         /// <param name="volatility">The volatility.</param>
         /// <param name="underPrice">Price of the underlying.</param>
+        /// <param name="optionPriceOptions"></param>
         void RequestCalculateOptionPrice(int reqId, Contract contract, double volatility,
-            double underPrice);
+            double underPrice, List<TagValue> optionPriceOptions = null);
 
         /// <summary>
         /// Call this function to cancel a request to calculate option price and greek values for a supplied volatility and underlying price.
@@ -727,6 +850,76 @@ namespace Krs.Ats.IBNet
         /// </summary>
         /// <param name="marketDataType">1 for real-time streaming market data or 2 for frozen market data.</param>
         void RequestMarketDataType(int marketDataType);
+
+        /// <summary>
+        /// Call this method to request market depth for a specific contract. The market depth will be returned by the updateMktDepth() and updateMktDepthL2() methods.
+        /// </summary>
+        /// <param name="reqId">the unique request idntifier.</param>
+        /// <param name="group">set to "All" to return account summary data for all accounts, or set to a specific Advisor Account Group name that has already been created in TWS Global Configuration.</param>
+        /// <param name="tags">tags a comma separated list with the desired tags:
+        ///      - AccountType
+        ///      - NetLiquidation,
+        ///      - TotalCashValue — Total cash including futures pnl
+        ///      - SettledCash — For cash accounts, this is the same as TotalCashValue
+        ///      - AccruedCash — Net accrued interest
+        ///      - BuyingPower — The maximum amount of marginable US stocks the account can buy
+        ///      - EquityWithLoanValue — Cash + stocks + bonds + mutual funds
+        ///      - PreviousEquityWithLoanValue,
+        ///      - GrossPositionValue — The sum of the absolute value of all stock and equity option positions
+        ///      - RegTEquity,
+        ///      - RegTMargin,
+        ///      - SMA — Special Memorandum Account
+        ///      - InitMarginReq,
+        ///      - MaintMarginReq,
+        ///      - AvailableFunds,
+        ///      - ExcessLiquidity,
+        ///      - Cushion — Excess liquidity as a percentage of net liquidation value
+        ///      - FullInitMarginReq,
+        ///      - FullMaintMarginReq,
+        ///      - FullAvailableFunds,
+        ///      - FullExcessLiquidity,
+        ///      - LookAheadNextChange — Time when look-ahead values take effect
+        ///      - LookAheadInitMarginReq,
+        ///      - LookAheadMaintMarginReq,
+        ///      - LookAheadAvailableFunds,
+        ///      - LookAheadExcessLiquidity,
+        ///      - HighestSeverity — A measure of how close the account is to liquidation
+        ///      - DayTradesRemaining — The Number of Open/Close trades a user could put on before Pattern Day Trading is detected. A value of "-1" means that the user can put on unlimited day trades.
+        ///      - Leverage — GrossPositionValue / NetLiquidation
+        /// </param>
+        void RequestAccountSummary(int reqId, string group, string tags);
+
+        /// <summary>
+        /// After requesting an account's summary, invoke this function to cancel it.
+        /// </summary>
+        /// <param name="reqId">the identifier of the previously performed account request</param>
+        void CancelAccountSummary(int reqId);
+
+        /// <summary>
+        /// Requests positions for account and/or model
+        /// </summary>
+        /// <param name="requestId">Request's identifier</param>
+        /// <param name="account">If an account Id is provided, only the account's positions belonging to the specified model will be delivered</param>
+        /// <param name="modelCode">The code of the model's positions we are interested in.</param>
+        void RequestPositionsMulti(int requestId, string account, string modelCode);
+
+        /// <summary>
+        /// Cancels positions request for account and/or model
+        /// </summary>
+        /// <param name="requestId"></param>
+        void CancelPositionsMulti(int requestId);
+
+        /// <summary>
+        /// Requests all positions from all accounts. Does not keep an open subscription.
+        /// Returned through Position event.
+        /// </summary>
+        void RequestPositions();
+
+        /// <summary>
+        /// Cancels all account's positions request
+        /// </summary>
+        void CancelPositions();
+
 
         /// <summary>
         /// The default level is ERROR. Refer to the API logging page for more details.

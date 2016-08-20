@@ -16,7 +16,7 @@
     <UpgradeBackupLocation>
     </UpgradeBackupLocation>
     <IsWebBootstrapper>false</IsWebBootstrapper>
-    <TargetFrameworkVersion>v2.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -31,6 +31,7 @@
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -43,6 +44,7 @@
     <DocumentationFile>bin\Debug\Krs.Ats.IBNet.XML</DocumentationFile>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -53,6 +55,7 @@
     <WarningLevel>4</WarningLevel>
     <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
     <DocumentationFile>bin\Release\Krs.Ats.IBNet.XML</DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -60,7 +63,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BinaryReaderExtensions.cs" />
+    <Compile Include="BinaryWriterExtensions.cs" />
     <Compile Include="CommissionReport.cs" />
+    <Compile Include="Constants.cs" />
     <Compile Include="Contracts\Equity.cs" />
     <Compile Include="Contracts\Forex.cs" />
     <Compile Include="Contracts\Future.cs" />
@@ -74,6 +80,7 @@
     <Compile Include="Enums\ComboOpenClose.cs" />
     <Compile Include="Enums\MarketDataType.cs" />
     <Compile Include="Enums\MinServerVersion.cs" />
+    <Compile Include="Enums\OrderConditionType.cs" />
     <Compile Include="Enums\SecurityIdType.cs" />
     <Compile Include="Enums\ExecutionSide.cs" />
     <Compile Include="Enums\FinancialAdvisorAllocationMethod.cs" />
@@ -91,13 +98,25 @@
     <Compile Include="Enums\TimeInForce.cs" />
     <Compile Include="Enums\TriggerMethod.cs" />
     <Compile Include="Enums\VolatilityType.cs" />
+    <Compile Include="EventArgs\AccountSummaryEndEventArgs.cs" />
+    <Compile Include="EventArgs\AccountSummaryEventArgs.cs" />
+    <Compile Include="EventArgs\AccountUpdateMultiEndEventArgs.cs" />
+    <Compile Include="EventArgs\AccountUpdateMultiEventArgs.cs" />
     <Compile Include="EventArgs\BondContractDetailsEventArgs.cs" />
+    <Compile Include="EventArgs\SecurityDefinitionParameterEndEventArgs.cs" />
     <Compile Include="EventArgs\CommissionReportEventArgs.cs" />
     <Compile Include="EventArgs\ConnectionClosedEventArgs.cs" />
     <Compile Include="EventArgs\ContractDetailsEndEventArgs.cs" />
     <Compile Include="EventArgs\AccountDownloadEndEventArgs.cs" />
+    <Compile Include="EventArgs\DisplayGroupListEventArgs.cs" />
+    <Compile Include="EventArgs\DisplayGroupUpdatedEventArgs.cs" />
     <Compile Include="EventArgs\MarketDataTypeEventArgs.cs" />
+    <Compile Include="EventArgs\PositionEndEventArgs.cs" />
+    <Compile Include="EventArgs\PositionEventArgs.cs" />
+    <Compile Include="EventArgs\PositionMultiEndEventArgs.cs" />
+    <Compile Include="EventArgs\PositionMultiEventArgs.cs" />
     <Compile Include="EventArgs\ReportExceptionEventArgs.cs" />
+    <Compile Include="EventArgs\SecurityDefinitionParameterEventArgs.cs" />
     <Compile Include="EventArgs\TickSnapshotEndEventArgs.cs" />
     <Compile Include="EventArgs\DeltaNuetralValidationEventArgs.cs" />
     <Compile Include="EventArgs\ExecutionDataEndEventArgs.cs" />
@@ -118,6 +137,8 @@
     <Compile Include="EventArgs\ContractDetailsEventArgs.cs" />
     <Compile Include="EventArgs\ExecDetailsEventArgs.cs" />
     <Compile Include="Execution.cs" />
+    <Compile Include="OrderConditions\ContractCondition.cs" />
+    <Compile Include="OrderConditions\ExecutionCondition.cs" />
     <Compile Include="ExecutionFilter.cs" />
     <Compile Include="Enums\FADataType.cs" />
     <Compile Include="Enums\GenericTickType.cs" />
@@ -133,6 +154,13 @@
     <Compile Include="EventArgs\OrderStatusEventArgs.cs" />
     <Compile Include="Enums\OutgoingMessage.cs" />
     <Compile Include="OrderComboLeg.cs" />
+    <Compile Include="OrderConditions\MarginCondition.cs" />
+    <Compile Include="OrderConditions\OperatorCondition.cs" />
+    <Compile Include="OrderConditions\OrderCondition.cs" />
+    <Compile Include="OrderConditions\PercentChangeCondition.cs" />
+    <Compile Include="OrderConditions\PriceCondition.cs" />
+    <Compile Include="OrderConditions\TimeCondition.cs" />
+    <Compile Include="OrderConditions\VolumeCondition.cs" />
     <Compile Include="OrderState.cs" />
     <Compile Include="Orders\LimitOrder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

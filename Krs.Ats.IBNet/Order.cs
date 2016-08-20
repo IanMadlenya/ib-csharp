@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace Krs.Ats.IBNet
@@ -87,7 +88,7 @@ namespace Krs.Ats.IBNet
         private double stockRefPrice;
         private bool sweepToFill;
         private TimeInForce tif; // "Time in Force" - DAY, GTC, etc.
-        private int totalQuantity;
+        private double totalQuantity;
         private decimal trailStopPrice; // for TRAILLIMIT orders only
         private bool transmit; // if false, order will be created but not transmited
 
@@ -136,24 +137,24 @@ namespace Krs.Ats.IBNet
             transmit = true;
             tif = TimeInForce.Day;
             designatedLocation = "";
-            minQty = Int32.MaxValue;
-            percentOffset = Double.MaxValue;
+            minQty = int.MaxValue;
+            percentOffset = double.MaxValue;
             nbboPriceCap = decimal.MaxValue;
             startingPrice = decimal.MaxValue;
-            stockRefPrice = Double.MaxValue;
-            delta = Double.MaxValue;
-            stockRangeLower = Double.MaxValue;
-            stockRangeUpper = Double.MaxValue;
-            volatility = Double.MaxValue;
+            stockRefPrice = double.MaxValue;
+            delta = double.MaxValue;
+            stockRangeLower = double.MaxValue;
+            stockRangeUpper = double.MaxValue;
+            volatility = double.MaxValue;
             volatilityType = VolatilityType.Undefined;
             deltaNeutralOrderType = OrderType.Empty;
-            deltaNeutralAuxPrice = Double.MaxValue;
-            referencePriceType = Int32.MaxValue;
+            deltaNeutralAuxPrice = double.MaxValue;
+            referencePriceType = int.MaxValue;
             trailStopPrice = decimal.MaxValue;
             basisPoints = decimal.MaxValue;
-            basisPointsType = Int32.MaxValue;
-            scaleInitLevelSize = Int32.MaxValue;
-            scaleSubsLevelSize = Int32.MaxValue;
+            basisPointsType = int.MaxValue;
+            scaleInitLevelSize = int.MaxValue;
+            scaleSubsLevelSize = int.MaxValue;
             scalePriceIncrement = decimal.MaxValue;
             faMethod = FinancialAdvisorAllocationMethod.None;
             notHeld = false;
@@ -165,6 +166,36 @@ namespace Krs.Ats.IBNet
             deltaNeutralSettlingFirm = string.Empty;
             deltaNeutralClearingAccount = string.Empty;
             deltaNeutralClearingIntent = string.Empty;
+
+            DeltaNeutralOpenClose = "";
+            DeltaNeutralShortSale = false;
+            DeltaNeutralShortSaleSlot = 0;
+            DeltaNeutralDesignatedLocation = "";
+            referencePriceType = int.MaxValue;
+            trailStopPrice = decimal.MaxValue;
+            TrailingPercent = double.MaxValue;
+            BasisPoints = decimal.MaxValue;
+            basisPointsType = int.MaxValue;
+            scaleInitLevelSize = int.MaxValue;
+            scaleSubsLevelSize = int.MaxValue;
+            scalePriceIncrement = decimal.MaxValue;
+            ScalePriceAdjustValue = double.MaxValue;
+            ScalePriceAdjustInterval = int.MaxValue;
+            ScaleProfitOffset = double.MaxValue;
+            ScaleAutoReset = false;
+            ScaleInitPosition = int.MaxValue;
+            ScaleInitFillQty = int.MaxValue;
+            ScaleRandomPercent = false;
+            ScaleTable = "";
+            whatIf = false;
+            notHeld = false;
+            Conditions = new List<OrderCondition>();
+            TriggerPrice = double.MaxValue;
+            LmtPriceOffset = double.MaxValue;
+            AdjustedStopPrice = double.MaxValue;
+            AdjustedStopLimitPrice = double.MaxValue;
+            AdjustedTrailingAmount = double.MaxValue;
+            ExtOperator = "";
         }
 
         #endregion
@@ -210,7 +241,7 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// The order quantity.
         /// </summary>
-        public int TotalQuantity
+        public double TotalQuantity
         {
             get { return totalQuantity; }
             set { totalQuantity = value; }
@@ -980,6 +1011,120 @@ namespace Krs.Ats.IBNet
         /// For extended Scale orders.
         /// </summary>
         public bool ScaleRandomPercent { get; set; }
+
+        public string AlgoId { get; set; }
+        /// <summary>
+        /// This is a regulartory attribute that applies to all US Commodity (Futures) Exchanges, provided to allow client to comply with CFTC Tag 50 Rules. 
+        /// </summary>
+        public string ExtOperator { get; set;}
+
+        /// <summary>
+        /// For GTC orders.
+        /// </summary>
+        public string ActiveStartTime { get; set; }
+
+        /// <summary>
+        /// For GTC orders.
+        /// </summary>
+        public string ActiveStopTime { get; set; }
+
+        /// <summary>
+        /// Used for scale orders
+        /// </summary>
+        public string ScaleTable { get; set; }
+
+        /// <summary>
+        /// DOC_TODO
+        /// </summary>
+        public List<TagValue> OrderMiscOptions { get; set; }
+
+        /// <summary>
+        /// DOC_TODO
+        /// </summary>
+        public bool Solicited { get; set; }
+
+        /// <summary>
+        /// DOC_TODO
+        /// </summary>
+        public bool RandomizeSize { get; set; }
+
+        /// <summary>
+        /// DOC_TODO
+        /// </summary>
+        public bool RandomizePrice { get; set; }
+
+        /// <summary>
+        /// Pegged-to-benchmark orders: this attribute will contain the conId of the contract against which the order will be pegged.
+        /// </summary>
+        public int ReferenceContractId { get; set; }
+        /// <summary>
+        /// Pegged-to-benchmark orders: indicates whether the order's pegged price should increase or decreases.
+        /// </summary>
+        public bool IsPeggedChangeAmountDecrease { get; set; }
+        /// <summary>
+        /// Pegged-to-benchmark orders: amount by which the order's pegged price should move.
+        /// </summary>
+        public double PeggedChangeAmount { get; set; }
+        /// <summary>
+        /// Pegged-to-benchmark orders: the amount the reference contract needs to move to adjust the pegged order.
+        /// </summary>
+        public double ReferenceChangeAmount { get; set; }
+        /// <summary>
+        /// Pegged-to-benchmark orders: the exchange against which we want to observe the reference contract.
+        /// </summary>
+        public string ReferenceExchange { get; set; }
+
+        /// <summary>
+        /// Adjusted Stop orders: the parent order will be adjusted to the given type when the adjusted trigger price is penetrated.
+        /// </summary>
+        public string AdjustedOrderType { get; set; }
+
+        /// <summary>
+         /// - DOC_TODO
+         /// </summary>
+        public double TriggerPrice { get; set; }
+
+        /// <summary>
+         /// - DOC_TODO
+         /// </summary>
+        public double LmtPriceOffset { get; set; }
+
+        /// <summary>
+        /// Adjusted Stop orders: specifies the stop price of the adjusted (STP) parent
+        /// </summary>
+        public double AdjustedStopPrice { get; set; }
+
+        /// <summary>
+        /// Adjusted Stop orders: specifies the stop limit price of the adjusted (STPL LMT) parent
+        /// </summary>
+        public double AdjustedStopLimitPrice { get; set; }
+
+        /// <summary>
+        /// Adjusted Stop orders: specifies the trailing amount of the adjusted (TRAIL) parent 
+        /// </summary>
+        public double AdjustedTrailingAmount { get; set; }
+
+        /// <summary>
+         /// Adjusted Stop orders: specifies where the trailing unit is an amount (set to 0) or a percentage (set to 1)
+         /// </summary>
+        public int AdjustableTrailingUnit { get; set; }
+
+        /// <summary>
+        /// Conditions determining when the order will be activated or canceled 
+        /// </summary>
+        public List<OrderCondition> Conditions { get; set; }
+
+        /// <summary>
+        /// Indicates whether or not conditions will also be valid outside Regular Trading Hours
+        /// </summary>
+        public bool ConditionsIgnoreRth { get; set; }
+
+        /// <summary>
+        /// Conditions can determine if an order should become active or canceled.
+        /// </summary>
+        public bool ConditionsCancelOrder { get; set; }
+
+        public string ModelCode { get; set; }
 
         #endregion
     }

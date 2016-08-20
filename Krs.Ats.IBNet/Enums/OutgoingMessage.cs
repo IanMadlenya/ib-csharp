@@ -156,6 +156,24 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// Request Market Data Type
         /// </summary>
-        [Description("REQ_MARKET_DATA_TYPE")] RequestMarketDataType = 59
+        [Description("REQ_MARKET_DATA_TYPE")] RequestMarketDataType = 59,
+        RequestPositions = 61,
+        RequestAccountSummary = 62,
+        CancelAccountSummary = 63,
+        CancelPositions = 64,
+        VerifyRequest = 65,
+        VerifyMessage = 66,
+        QueryDisplayGroups = 67,
+        SubscribeToGroupEvents = 68,
+        UpdateDisplayGroup = 69,
+        UnsubscribeFromGroupEvents = 70,
+        StartApi = 71,
+        VerifyAndAuthRequest = 72,
+        VerifyAndAuthMessage = 73,
+        RequestPositionsMulti = 74,
+        CancelPositionsMulti = 75,
+        RequestAccountUpdatesMulti = 76,
+        CancelAccountUpdatesMulti = 77,
+        RequestSecurityDefinitionOptionalParameters = 78,
     }
 }

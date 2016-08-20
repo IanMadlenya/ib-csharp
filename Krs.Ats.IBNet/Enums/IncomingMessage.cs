@@ -156,6 +156,22 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// Commission Report
         /// </summary>
-        [Description("COMMISION_REPORT")]  CommissionReport = 59
-    }
+        [Description("COMMISION_REPORT")]  CommissionReport = 59,
+        Position = 61,
+        PositionEnd = 62,
+        AccountSummary = 63,
+        AccountSummaryEnd = 64,
+        VerifyMessageApi = 65,
+        VerifyCompleted = 66,
+        DisplayGroupList = 67,
+        DisplayGroupUpdated = 68,
+        VerifyAndAuthMessageApi = 69,
+        VerifyAndAuthCompleted = 70,
+        PositionMulti = 71,
+        PositionMultiEnd = 72,
+        AccountUpdateMulti = 73,
+        AccountUpdateMultiEnd = 74,
+        SecurityDefinitionOptionParameter = 75,
+        SecurityDefinitionOptionParameterEnd = 76,
+}
 }

@@ -65,10 +65,10 @@ namespace Krs.Ats.TestApp
             //Forex Test
             Forex EUR = new Forex("EUR", "USD");
 
-            client.RequestMarketData(14, Google, null, false, false);
+            client.RequestMarketData(14, Google, null, false, false, null);
             client.RequestMarketDepth(15, Google, 5);
-            client.RequestRealTimeBars(16, Google, 5, RealTimeBarType.Trades,false);
-            client.RequestMarketData(17, EUR, null, false, false);
+            client.RequestRealTimeBars(16, Google, 5, RealTimeBarType.Trades, false, null);
+            client.RequestMarketData(17, EUR, null, false, false, null);
 
             Order BuyContract = new Order();
             BuyContract.Action = ActionSide.Buy;

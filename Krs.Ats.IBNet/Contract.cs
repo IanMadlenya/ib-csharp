@@ -36,6 +36,7 @@ namespace Krs.Ats.IBNet
         private String symbol;
 
         private UnderlyingComponent underlyingComponent;
+        private string tradingClass;
 
         #endregion
 
@@ -157,7 +158,7 @@ namespace Krs.Ats.IBNet
         }
 
         /// <summary>
-        /// The expiration date. Use the format YYYYMM.
+        /// The expiration date. Use the format YYYYMM or YYYYMMDD.
         /// </summary>
         public string Expiry
         {
@@ -318,6 +319,17 @@ namespace Krs.Ats.IBNet
             {
                 secId = value;
             }
+        }
+
+
+        /// <summary>
+        /// The trading class name for this contract.
+        /// Available in TWS contract description window as well.For example, GBL Dec '13 future's trading class is "FGBL"
+        /// </summary>
+        public string TradingClass
+        {
+            get { return tradingClass; }
+            set { tradingClass = value; }
         }
 
         #endregion

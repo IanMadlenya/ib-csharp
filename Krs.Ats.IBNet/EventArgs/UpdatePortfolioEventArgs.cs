@@ -14,7 +14,7 @@ namespace Krs.Ats.IBNet
 		private decimal marketPrice;
 		private decimal marketValue;
 
-		private int position;
+		private double position;
 		private decimal realizedPnl;
 		private decimal unrealizedPnl;
 
@@ -33,7 +33,7 @@ namespace Krs.Ats.IBNet
 		/// <param name="realizedPnl">Shows your profit on closed positions, which is the difference between your entry execution cost
 		/// (execution price + commissions to open the position) and exit execution cost ((execution price + commissions to close the position)</param>
 		/// <param name="accountName">The name of the account the message applies to.  Useful for Financial Advisor sub-account messages.</param>
-		public UpdatePortfolioEventArgs(Contract contract, int position, decimal marketPrice, decimal marketValue,
+		public UpdatePortfolioEventArgs(Contract contract, double position, decimal marketPrice, decimal marketValue,
 										decimal averageCost, decimal unrealizedPnl, decimal realizedPnl, string accountName)
 		{
 			this.contract = contract;
@@ -68,7 +68,7 @@ namespace Krs.Ats.IBNet
 		/// This integer indicates the position on the contract.
 		/// If the position is 0, it means the position has just cleared.
 		/// </summary>
-		public int Position
+		public double Position
 		{
 			get { return position; }
 			set { position = value; }

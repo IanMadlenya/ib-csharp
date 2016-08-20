@@ -10,12 +10,12 @@ namespace Krs.Ats.IBNet
     {
         private decimal averageFillPrice;
         private int clientId;
-        private int filled;
+        private double filled;
         private decimal lastFillPrice;
         private int orderId;
         private int parentId;
         private int permId;
-        private int remaining;
+        private double remaining;
         private string whyHeld;
 
         private OrderStatus status;
@@ -38,7 +38,7 @@ namespace Krs.Ats.IBNet
         /// The TWS orders have a fixed clientId and orderId of 0 that distinguishes them from API orders.</param>
         /// <param name="whyHeld">This field is used to identify an order held when TWS is trying to locate shares for a short sell.
         /// The value used to indicate this is 'locate'.</param>
-        public OrderStatusEventArgs(int orderId, OrderStatus status, int filled, int remaining, decimal averageFillPrice,
+        public OrderStatusEventArgs(int orderId, OrderStatus status, double filled, double remaining, decimal averageFillPrice,
                                     int permId, int parentId, decimal lastFillPrice, int clientId, string whyHeld)
         {
             this.orderId = orderId;
@@ -124,7 +124,7 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// Specifies the number of shares that have been executed.
         /// </summary>
-        public int Filled
+        public double Filled
         {
             get { return filled; }
 			set { filled = value; }
@@ -133,7 +133,7 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// Specifies the number of shares still outstanding.
         /// </summary>
-        public int Remaining
+        public double Remaining
         {
             get { return remaining; }
 			set { remaining = value; }

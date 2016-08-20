@@ -156,6 +156,89 @@ namespace Krs.Ats.IBNet
         /// </summary>
         [Description("Request Market Data Type Sending Error")] FailSendRequestMarketDataType = 539,
         /// <summary>
+        /// Request Positions Sending Error
+        /// </summary>
+        [Description("Request Positions Sending Error - ")] FailSendRequestPositions = 540,
+        /// <summary>
+        /// Cancel Positions Sending Error
+        /// </summary>
+        [Description("Cancel Positions Sending Error")] FailSendCancelPositions = 541,
+        /// <summary>
+        /// Request Account Data Sending Error
+        /// </summary>
+        [Description("Request Account Data Sending Error - ")] FailSendRequestAccountData = 542,
+        /// <summary>
+        /// Request Account Data Sending Error
+        /// </summary>
+        [Description("Cancel Account Data Sending Error - ")] FailSendCancelAccountData = 543,
+        /// <summary>
+        /// Verify Request Sending Error
+        /// </summary>
+        [Description("Verify Request Sending Error - ")]
+        FailSendVerifyRequest = 544,
+        /// <summary>
+        /// Verify Message Sending Error
+        /// </summary>
+        [Description("Verify Message Sending Error - ")]
+        FailSendVerifyMessage = 545,
+        /// <summary>
+        /// Request Display Groups Sending Error 
+        /// </summary>
+        [Description("Request Display Groups Sending Error - ")]
+        FailSendRequestDisplayGroups = 546,
+        /// <summary>
+        /// Subscribe To Group Events Sending Error
+        /// </summary>
+        [Description("Subscribe To Group Events Sending Error - ")]
+        FailSendSubscribeToGroupEvents = 547,
+        /// <summary>
+        /// Update Display Group Sending Error
+        /// </summary>
+        [Description("Update Display Group Sending Error - ")]
+        FailSendUpdateDisplayGroup = 548,
+        /// <summary>
+        /// Unsubscribe From Group Events Sending Error
+        /// </summary>
+        [Description("Unsubscribe From Group Events Sending Error - ")]
+        FailSendUnsubscribeFromGroupEvents = 549,
+
+        /// <summary>
+        /// Verify And Auth Request Sending Error
+        /// </summary>
+        [Description("Verify And Auth Request Sending Error - ")]
+        FailSendVerifyAndAuthRequest = 551,
+        /// <summary>
+        /// Verify And Auth Message Sending Error
+        /// </summary>
+        [Description("Verify And Auth Message Sending Error - ")]
+        FailSendVerifyAndAuthMessage = 552,
+        /// <summary>
+        /// Request Positions Multi Sending Error
+        /// </summary>
+        [Description("Request Positions Multi Sending Error - ")]
+        FailSendRequestPositionsMulti = 553,
+        /// <summary>
+        /// Cancel Positions Multi Sending Error
+        /// </summary>
+        [Description("Cancel Positions Multi Sending Error - ")]
+        FailSendCancelPositionsMulti = 554,
+        /// <summary>
+        /// Request Account Updates Multi Sending Error
+        /// </summary>
+        [Description("Request Account Updates Multi Sending Error - ")]
+        FailSendRequestAccountUpdatesMulti = 555,
+        /// <summary>
+        /// Cancel Account Updates Multi Sending Error
+        /// </summary>
+        [Description("Cancel Account Updates Multi Sending Error - ")]
+        FailSendCancelAccountUpdatesMulti = 556,
+        /// <summary>
+        /// Request Security Definition Option Parameters Sending Error
+        /// </summary>
+        [Description("Request Security Definition Option Parameters Sending Error - ")]
+        FailSendReqSecDefOptParams = 557,
+
+        /// <summary>
         /// No Valid ID for error message
         /// </summary>
         [Description("No Valid Id")] NoValidId = -1,

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.IO;
@@ -7,6 +8,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Diagnostics;
+using Krs.Ats.IBNet.Enums;
 
 namespace Krs.Ats.IBNet
 {
@@ -182,7 +184,7 @@ namespace Krs.Ats.IBNet
             RaiseEvent(OrderStatus, this, e);
         }
 
-        private void orderStatus(int orderId, OrderStatus status, int filled, int remaining, decimal avgFillPrice,
+        private void orderStatus(int orderId, OrderStatus status, double filled, double remaining, decimal avgFillPrice,
                                  int permId,
                                  int parentId, decimal lastFillPrice, int clientId, string whyHeld)
         {
@@ -245,7 +247,7 @@ namespace Krs.Ats.IBNet
             RaiseEvent(UpdatePortfolio, this, e);
         }
 
-        private void updatePortfolio(Contract contract, int position, decimal marketPrice, decimal marketValue,
+        private void updatePortfolio(Contract contract, double position, decimal marketPrice, decimal marketValue,
                                      decimal averageCost, decimal unrealizedPNL, decimal realizedPNL, string accountName)
         {
             UpdatePortfolioEventArgs e =
@@ -768,6 +770,48 @@ namespace Krs.Ats.IBNet
             OnCommissionReport(e);
         }
 
+        /// <summary>
+        /// Called on a position call back.
+        /// </summary>
+        public event EventHandler<PositionEventArgs> Position;
+
+        private void position(string account, Contract contract, double pos, double avgCost)
+        {
+            var e = new PositionEventArgs(account, contract, pos, avgCost);
+            RaiseEvent(Position, this, e);
+        }
+
+        /// <summary>
+        /// Called on a position end call back
+        /// </summary>
+        public event EventHandler<PositionEndEventArgs> PositionEnd;
+
+        private void positionEnd()
+        {
+            RaiseEvent(PositionEnd, this, null);
+        }
+
+        /// <summary>
+        /// Receives the account information. This method will receive the account information just as it appears in the TWS' Account Summary Window. 
+        /// </summary>
+        public event EventHandler<AccountSummaryEventArgs> AccountSummary;
+
+        private void accountSummary(int requestId, string account, string tag, string value, string currency)
+        {
+            var e = new AccountSummaryEventArgs(requestId, account, tag, value, currency);
+            RaiseEvent(AccountSummary, this, e);
+        }
+
+        /// <summary>
+        /// notifies when all the accounts' information has ben received.
+        /// </summary>
+        public event EventHandler<AccountSummaryEndEventArgs> AccountSummaryEnd;
+        private void accountSummaryEnd(int requestId)
+        {
+            var e = new AccountSummaryEndEventArgs(requestId);
+            RaiseEvent(AccountSummaryEnd, this, e);
+        }
+
 
         /// <summary>
         /// This event is fired when there is an error with the communication or when TWS wants to send a message to the client.
@@ -868,6 +912,90 @@ namespace Krs.Ats.IBNet
             OnTickSnapshotEnd(e);
         }
 
+        /// <summary>
+        /// provides the portfolio's open positions.
+        /// </summary>
+        public event EventHandler<PositionMultiEventArgs> PositionMulti;
+        private void positionMulti(int requestId, string account, string modelCode, Contract contract, double pos, double avgCost)
+        {
+            var e = new PositionMultiEventArgs(requestId, account, modelCode, contract, pos, avgCost);
+            RaiseEvent(PositionMulti, this, e);
+        }
+
+        /// <summary>
+        /// Indicates all the positions have been transmitted.
+        /// </summary>
+        public event EventHandler<PositionMultiEndEventArgs> PositionMultiEnd;
+
+        private void positionMultiEnd(int requestId)
+        {
+            var e = new PositionMultiEndEventArgs(requestId);
+            RaiseEvent(PositionMultiEnd, this, e);
+        }
+
+        private void verifyAndAuthMessageAPI(string apiData, string xyzChallenge)
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// call triggered once after receiving the subscription request, and will be sent again if the selected contract in the subscribed * display group has changed.
+        /// </summary>
+        public event EventHandler<DisplayGroupUpdatedEventArgs> DisplayGroupUpdated;
+        private void displayGroupUpdated(int reqId, string contractInfo)
+        {
+            RaiseEvent(DisplayGroupUpdated, this, new DisplayGroupUpdatedEventArgs(reqId, contractInfo));
+        }
+
+
+        /// <summary>
+        /// a one-time response to querying the display groups
+        /// </summary>
+        public event EventHandler<DisplayGroupListEventArgs> DisplayGroupList;
+
+        private void displayGroupList(int reqId, string groups)
+        {
+            RaiseEvent(DisplayGroupList, this, new DisplayGroupListEventArgs(reqId, groups));
+        }
+
+        /// <summary>
+        /// called when all callbacks to securityDefinitionOptionParameter are complete
+        /// </summary>
+        public event EventHandler<SecurityDefinitionParameterEndEventArgs> SecurityDefinitionParameterEnd;
+        private void securityDefinitionOptionParameterEnd(int reqId)
+        {
+            RaiseEvent(SecurityDefinitionParameterEnd, this, new SecurityDefinitionParameterEndEventArgs(reqId));
+        }
+
+        /// <summary>
+        /// returns the option chain for an underlying on an exchange specified in reqSecDefOptParams There will be multiple callbacks to securityDefinitionOptionParameter if multiple exchanges are specified in reqSecDefOptParams
+        /// </summary>
+        public event EventHandler<SecurityDefinitionParameterEventArgs> SecurityDefinitionParameter;
+        private void securityDefinitionOptionParameter(int reqId, string exchange, int underlyingConId, string tradingClass, string multiplier, List<string> expirations, List<double> strikes)
+        {
+            RaiseEvent(SecurityDefinitionParameter, this,
+                new SecurityDefinitionParameterEventArgs(reqId, exchange, underlyingConId, tradingClass, multiplier, expirations, strikes));
+        }
+
+        /// <summary>
+        /// Indicates all the account updates have been transmitted.
+        /// </summary>
+        public event EventHandler<AccountUpdateMultiEndEventArgs> AccountUpdateMultiEnd;
+        private void accountUpdateMultiEnd(int requestId)
+        {
+            RaiseEvent(AccountUpdateMultiEnd, this, new AccountUpdateMultiEndEventArgs(requestId));
+        }
+
+        /// <summary>
+        /// provides the account updates
+        /// </summary>
+        public event EventHandler<AccountUpdateMultiEventArgs> AccountUpdateMulti;
+        private void accountUpdateMulti(int requestId, string account, string modelCode, string key, string value, string currency)
+        {
+            RaiseEvent(AccountUpdateMulti, this,
+                new AccountUpdateMultiEventArgs(requestId, account, modelCode, key, value, currency));
+        }
+
         #endregion
 
         #region Constructor / Destructor
@@ -929,8 +1057,7 @@ namespace Krs.Ats.IBNet
         #region IBClientSocket
 
         #region Values
-
-        private const int clientVersion = 60;
+        
         private const int minimumServerVersion = 38;
 
         #endregion
@@ -956,10 +1083,7 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// Returns the client version of the TWS API
         /// </summary>
-        public static int ClientVersion
-        {
-            get { return clientVersion; }
-        }
+        public static int ClientVersion => Constants.ClientVersion;
 
         /// <summary>
         /// Returns the time the API application made a connection to TWS
@@ -1010,9 +1134,7 @@ namespace Krs.Ats.IBNet
                 dis = new BinaryReader(ibSocket.GetStream());
                 dos = new BinaryWriter(ibSocket.GetStream());
 
-                // set client version
-                send(clientVersion);
-
+                send(Constants.ClientVersion);
                 // start Reader thread
 
                 // check server version
@@ -1035,8 +1157,22 @@ namespace Krs.Ats.IBNet
                 // Send the client id
                 if (serverVersion >= 3)
                 {
-                    send(clientId);
+                    if (serverVersion < MinServerVersion.Linking)
+                    {
+                        send(clientId);
+                    }
                 }
+
+                int version = 2;
+
+                send((int)OutgoingMessage.StartApi);
+                send(version);
+                send(clientId);
+
+                string optionalCapabilities = "";
+
+                if (serverVersion >= MinServerVersion.OptionalCapabilities)
+                    send(optionalCapabilities);
 
                 Start();
 
@@ -1122,12 +1258,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < 24)
                 {
@@ -1162,12 +1293,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < 24)
                 {
@@ -1193,22 +1319,147 @@ namespace Krs.Ats.IBNet
         }
 
         /// <summary>
+        /// Requests all available Display Groups in TWS
+        /// </summary>
+        /// <param name="requestId"></param>
+        public void RequestDisplayGroups(int requestId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.Linking)
+            {
+                error(ErrorMessage.UpdateTws, "It does not support API subscribeToGroupEvents.");
+                return;
+            }
+
+            int version = 1;
+            try
+            {
+                send((int)OutgoingMessage.QueryDisplayGroups);
+                send(version);
+                send(requestId);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+                error(requestId, ErrorMessage.FailSendRequestDisplayGroups, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Updates the contract displayed in a TWS Window Group
+        /// </summary>
+        /// <param name="requestId">requestId is the ID chosen for this request</param>
+        /// <param name="contractInfo">contractInfo is an encoded value designating a unique IB contract. Possible values include:
+        /// 1. none = empty selection
+        /// 2. contractID @exchange - any non-combination contract.Examples 8314@SMART for IBM SMART; 8314@ARCA for IBM ARCA
+        /// 3. combo= if any combo is selected
+        /// Note: This request from the API does not get a TWS response unless an error occurs. </param>
+        public void UpdateDisplayGroup(int requestId, string contractInfo)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.Linking)
+            {
+                error(ErrorMessage.UpdateTws, "It does not support updateDisplayGroup.");
+                return;
+            }
+
+            int version = 1;
+            try
+            {
+                send((int)OutgoingMessage.QueryDisplayGroups);
+                send(version);
+                send(requestId);
+                send(contractInfo);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+                error(requestId, ErrorMessage.FailSendUpdateDisplayGroup, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Integrates API client and TWS window grouping. 
+        /// </summary>
+        /// <param name="requestId">requestId is the Id chosen for this subscription request</param>
+        /// <param name="groupId">groupId is the display group for integration</param>
+        public void SubscribeToGroupEvents(int requestId, int groupId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.Linking)
+            {
+                error(ErrorMessage.UpdateTws, "It does not support SubscribeToGroupEvents.");
+                return;
+            }
+
+            int version = 1;
+            try
+            {
+                send((int)OutgoingMessage.SubscribeToGroupEvents);
+                send(version);
+                send(requestId);
+                send(groupId);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+                error(requestId, ErrorMessage.FailSendSubscribeToGroupEvents, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Cancels a TWS Window Group subscription
+        /// </summary>
+        /// <param name="requestId">requestId is the Id chosen for this subscription request</param>
+        public void UnsubscribeFromGroupEvents(int requestId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.Linking)
+            {
+                error(ErrorMessage.UpdateTws, "It does not support SubscribeToGroupEvents.");
+                return;
+            }
+
+            int version = 1;
+            try
+            {
+                send((int)OutgoingMessage.UnsubscribeFromGroupEvents);
+                send(version);
+                send(requestId);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+                error(requestId, ErrorMessage.FailSendUnsubscribeFromGroupEvents, e);
+                close();
+            }
+        }
+
+        /// <summary>
         /// Call the reqScannerSubscription() method to start receiving market scanner results through the scannerData() EWrapper method. 
         /// </summary>
         /// <param name="tickerId">the Id for the subscription. Must be a unique value. When the subscription  data is received, it will be identified by this Id. This is also used when canceling the scanner.</param>
         /// <param name="subscription">summary of the scanner subscription parameters including filters.</param>
-        public void RequestScannerSubscription(int tickerId, ScannerSubscription subscription)
+        /// <param name="scannerSubscriptionOptions"></param>
+        public void RequestScannerSubscription(int tickerId, ScannerSubscription subscription, List<TagValue> scannerSubscriptionOptions = null)
         {
             if (subscription == null)
                 throw new ArgumentNullException("subscription");
             lock (this)
             {
                 // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < 24)
                 {
@@ -1216,7 +1467,7 @@ namespace Krs.Ats.IBNet
                     return;
                 }
 
-                int version = 3;
+                int version = 4;
 
                 try
                 {
@@ -1250,6 +1501,12 @@ namespace Krs.Ats.IBNet
                     {
                         send(subscription.StockTypeFilter);
                     }
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        //int tagValuesCount = scannerSubscriptionOptions == null ? 0 : scannerSubscriptionOptions.Count;
+                        //paramsList.AddParameter(tagValuesCount);
+                        send(TagValueListToString(scannerSubscriptionOptions));
+                    }
                 }
                 catch (Exception e)
                 {
@@ -1261,6 +1518,16 @@ namespace Krs.Ats.IBNet
             }
         }
 
+        private bool CheckConnection()
+        {
+            if (!connected)
+            {
+                error(ErrorMessage.NotConnected);
+                return false;
+            }
+            return true;
+        }
+
         /// <summary>
         /// Call this method to request market data. The market data will be returned by the tickPrice, tickSize, tickOptionComputation(), tickGeneric(), tickString() and tickEFP() methods.
         /// </summary>
@@ -1269,16 +1536,12 @@ namespace Krs.Ats.IBNet
         /// <param name="genericTickList">comma delimited list of generic tick types.  Tick types can be found here: (new Generic Tick Types page) </param>
         /// <param name="snapshot">Allows client to request snapshot market data.</param>
         /// <param name="marketDataOff">Market Data Off - used in conjunction with RTVolume Generic tick type causes only volume data to be sent.</param>
-        public void RequestMarketData(int tickerId, Contract contract, Collection<GenericTickType> genericTickList, bool snapshot, bool marketDataOff)
+        /// <param name="mktDataOptions"></param>
+        public void RequestMarketData(int tickerId, Contract contract, Collection<GenericTickType> genericTickList, bool snapshot, bool marketDataOff, List<TagValue> mktDataOptions = null)
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 //35 is the minimum version for snapshots
                 if (serverVersion < MinServerVersion.ScaleOrders && snapshot)
@@ -1298,16 +1561,19 @@ namespace Krs.Ats.IBNet
                 }
 
                 //46 is the minimum version for requesting contracts by conid
-                if (serverVersion < MinServerVersion.RequestMarketDataConId)
+                if (serverVersion < MinServerVersion.RequestMarketDataConId && contract.ContractId > 0)
                 {
-                    if (contract.ContractId > 0)
-                    {
-                        error(tickerId, ErrorMessage.UpdateTws, "It does not support conId parameter.");
-                        return;
-                    }
+                    error(tickerId, ErrorMessage.UpdateTws, "It does not support conId parameter.");
+                    return;
                 }
 
-                int version = 9;
+                if (serverVersion < MinServerVersion.TradingClass && !string.IsNullOrEmpty(contract.TradingClass))
+                {
+                    error(tickerId, ErrorMessage.UpdateTws, " It does not support trading class parameter in reqMktData.");
+                    return;
+                }
+
+                int version = 11;
 
                 try
                 {
@@ -1316,7 +1582,9 @@ namespace Krs.Ats.IBNet
                     send(version);
                     send(tickerId);
                     if (serverVersion >= 47)
+                    {
                         send(contract.ContractId);
+                    }
 
                     //Send Contract Fields
                     send(contract.Symbol);
@@ -1340,6 +1608,13 @@ namespace Krs.Ats.IBNet
                     {
                         send(contract.LocalSymbol);
                     }
+
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
+
+
                     if (serverVersion >= 8 && contract.SecurityType == SecurityType.Bag)
                     {
                         if (contract.ComboLegs == null)
@@ -1402,10 +1677,15 @@ namespace Krs.Ats.IBNet
 
                         send(genList.ToString().Trim(','));
                     }
-                    //35 is the minum version for SnapShot
-                    if (serverVersion >= 35)
+
+                    if (serverVersion >= MinServerVersion.SnapshotMktData)
                     {
                         send(snapshot);
+                    }
+
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        send(TagValueListToString(mktDataOptions));
                     }
                 }
                 catch (Exception e)
@@ -1426,12 +1706,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < 24)
                 {
@@ -1467,12 +1742,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 //34 is the minimum server version for real time bars
                 if (serverVersion < MinServerVersion.RealTimeBars)
@@ -1500,7 +1770,7 @@ namespace Krs.Ats.IBNet
                 }
             }
         }
-        
+
         /// <summary>
         /// Call the reqHistoricalData() method to start receiving historical data results through the historicalData() EWrapper method. 
         /// </summary>
@@ -1597,13 +1867,14 @@ namespace Krs.Ats.IBNet
         /// 0 - all data is returned even where the market in question was outside of its regular trading hours.
         /// 1 - only data within the regular trading hours is returned, even if the requested time span falls partially or completely outside of the RTH.
         /// </param>
+        /// <param name="chartOptions"></param>
         public void RequestHistoricalData(int tickerId, Contract contract, DateTime endDateTime, TimeSpan duration,
-                                      BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth)
+                                      BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth, List<TagValue> chartOptions = null)
         {
             DateTime beginDateTime = endDateTime.Subtract(duration);
 
             string dur = ConvertPeriodtoIb(beginDateTime, endDateTime);
-            RequestHistoricalData(tickerId, contract, endDateTime, dur, barSizeSetting, whatToShow, useRth);
+            RequestHistoricalData(tickerId, contract, endDateTime, dur, barSizeSetting, whatToShow, useRth, chartOptions);
         }
 
         /// <summary>
@@ -1730,21 +2001,18 @@ namespace Krs.Ats.IBNet
         /// 0 - all data is returned even where the market in question was outside of its regular trading hours.
         /// 1 - only data within the regular trading hours is returned, even if the requested time span falls partially or completely outside of the RTH.
         /// </param>
+        /// <param name="chartOptions"></param>
         public void RequestHistoricalData(int tickerId, Contract contract, DateTime endDateTime, string duration,
-                                      BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth)
+                                      BarSize barSizeSetting, HistoricalDataType whatToShow, int useRth, List<TagValue> chartOptions = null)
         {
             if (contract == null)
-                throw new ArgumentNullException("contract");
+                throw new ArgumentNullException(nameof(contract));
+
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(tickerId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
-                int version = 4;
+                int version = 6;
 
                 try
                 {
@@ -1754,9 +2022,21 @@ namespace Krs.Ats.IBNet
                         return;
                     }
 
+                    if (!string.IsNullOrEmpty(contract.TradingClass) ||
+                        contract.ContractId > 0)
+                    {
+                        if (serverVersion < MinServerVersion.TradingClass)
+                        {
+                            error(tickerId, ErrorMessage.UpdateTws, " It does not support conId nor trading class parameters when requesting historical data.");
+                            return;
+                        }
+                    }
+
                     send((int)OutgoingMessage.RequestHistoricalData);
                     send(version);
                     send(tickerId);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                        send(contract.ContractId);
 
                     //Send Contract Fields
                     send(contract.Symbol);
@@ -1771,6 +2051,10 @@ namespace Krs.Ats.IBNet
                     send(contract.PrimaryExchange);
                     send(contract.Currency);
                     send(contract.LocalSymbol);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
                     if (serverVersion >= 31)
                     {
                         send(contract.IncludeExpired ? 1 : 0);
@@ -1810,6 +2094,11 @@ namespace Krs.Ats.IBNet
                             }
                         }
                     }
+
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        send(TagValueListToString(chartOptions));
+                    }
                 }
                 catch (Exception e)
                 {
@@ -1832,12 +2121,7 @@ namespace Krs.Ats.IBNet
                 throw new ArgumentNullException("contract");
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 // This feature is only available for versions of TWS >=4
                 if (serverVersion < 4)
@@ -1855,7 +2139,19 @@ namespace Krs.Ats.IBNet
                     }
                 }
 
-                const int version = 6;
+                if (serverVersion < MinServerVersion.TradingClass && !string.IsNullOrEmpty(contract.TradingClass))
+                {
+                    error(ErrorMessage.UpdateTws, " It does not support the TradingClass parameter when requesting contract details.");
+                    return;
+                }
+
+                if (serverVersion < MinServerVersion.Linking && !string.IsNullOrEmpty(contract.PrimaryExchange))
+                {
+                    error(ErrorMessage.UpdateTws, " It does not support PrimaryExchange parameter when requesting contract details.");
+                    return;
+                }
+
+                const int version = 8;
 
                 try
                 {
@@ -1863,13 +2159,13 @@ namespace Krs.Ats.IBNet
                     send((int) OutgoingMessage.RequestContractData);
                     send(version);
 
-                    //MIN_SERVER_VER_CONTRACT_DATA_CHAIN = 40
-                    if (serverVersion >= 40)
+
+                    if (serverVersion >= MinServerVersion.ContractDataChain)
                     {
                         send(requestId);
                     }
 
-                    if(serverVersion >= 37)
+                    if(serverVersion >= MinServerVersion.ContractConId)
                     {
                         send(contract.ContractId);
                     }
@@ -1883,15 +2179,35 @@ namespace Krs.Ats.IBNet
                     {
                         send(contract.Multiplier);
                     }
-                    send(contract.Exchange);
+                    if(serverVersion >= MinServerVersion.Primaryexch)
+                    {
+                        send(contract.Exchange);
+                        send(contract.PrimaryExchange);
+                    }
+                    else if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        if (!string.IsNullOrEmpty(contract.PrimaryExchange) && (contract.Exchange == "BEST" || contract.Exchange == "SMART"))
+                        {
+                            send(contract.Exchange + ":" + contract.PrimaryExchange);
+                        }
+                        else
+                        {
+                            send(contract.Exchange);
+                        }
+                    }
+
                     send(contract.Currency);
                     send(contract.LocalSymbol);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
                     if (serverVersion >= 31)
                     {
                         send(contract.IncludeExpired);
                     }
 
-                    if (serverVersion >= 45)
+                    if (serverVersion >= MinServerVersion.SecIdType)
                     {
                         send(EnumDescConverter.GetEnumDescription(contract.SecIdType));
                         send(contract.SecId);
@@ -1924,16 +2240,13 @@ namespace Krs.Ats.IBNet
         /// 0 = all data available during the time span requested is returned, including time intervals when the market in question was outside of regular trading hours.
         /// 1 = only data within the regular trading hours for the product requested is returned, even if the time time span falls partially or completely outside.
         /// </param>
-        public void RequestRealTimeBars(int tickerId, Contract contract, int barSize, RealTimeBarType whatToShow, bool useRth)
+        /// <param name="realTimeBarsOptions"></param>
+        public void RequestRealTimeBars(int tickerId, Contract contract, int barSize, RealTimeBarType whatToShow, bool useRth, List<TagValue> realTimeBarsOptions = null)
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(tickerId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
+
                 //34 is the minimum version for real time bars
                 if (serverVersion < MinServerVersion.RealTimeBars)
                 {
@@ -1941,7 +2254,14 @@ namespace Krs.Ats.IBNet
                     return;
                 }
 
-                int version = 1;
+                if (serverVersion < MinServerVersion.TradingClass &&
+                    (!string.IsNullOrEmpty(contract.TradingClass) || contract.ContractId > 0))
+                {
+                    error(ErrorMessage.UpdateTws, " It does not support ConId nor TradingClass parameters in reqMktDepth.");
+                    return;
+                }
+
+                int version = 3;
 
                 try
                 {
@@ -1949,6 +2269,10 @@ namespace Krs.Ats.IBNet
                     send((int)OutgoingMessage.RequestRealTimeBars);
                     send(version);
                     send(tickerId);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.ContractId);
+                    }
 
                     //Send Contract Fields
                     send(contract.Symbol);
@@ -1961,9 +2285,18 @@ namespace Krs.Ats.IBNet
                     send(contract.PrimaryExchange);
                     send(contract.Currency);
                     send(contract.LocalSymbol);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
+
                     send(barSize);
                     send(EnumDescConverter.GetEnumDescription(whatToShow));
                     send(useRth);
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        send(TagValueListToString(realTimeBarsOptions));
+                    }
                 }
                 catch (Exception e)
                 {
@@ -1974,7 +2307,7 @@ namespace Krs.Ats.IBNet
                 }
             }
         }
-        
+
 
         /// <summary>
         /// Call this method to request market depth for a specific contract. The market depth will be returned by the updateMktDepth() and updateMktDepthL2() methods.
@@ -1982,18 +2315,14 @@ namespace Krs.Ats.IBNet
         /// <param name="tickerId">the ticker Id. Must be a unique value. When the market depth data returns, it will be identified by this tag. This is also used when canceling the market depth.</param>
         /// <param name="contract">this structure contains a description of the contract for which market depth data is being requested.</param>
         /// <param name="numberOfRows">specifies the number of market depth rows to return.</param>
-        public void RequestMarketDepth(int tickerId, Contract contract, int numberOfRows)
+        /// <param name="mktDepthOptions"></param>
+        public void RequestMarketDepth(int tickerId, Contract contract, int numberOfRows, List<TagValue> mktDepthOptions = null)
         {
             if (contract == null)
                 throw new ArgumentNullException("contract");
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 // This feature is only available for versions of TWS >=6
                 if (serverVersion < 6)
@@ -2002,7 +2331,14 @@ namespace Krs.Ats.IBNet
                     return;
                 }
 
-                int version = 3;
+                if (serverVersion < MinServerVersion.TradingClass && 
+                    (!string.IsNullOrEmpty(contract.TradingClass) || contract.ContractId > 0))
+                {
+                    error(ErrorMessage.UpdateTws, " It does not support ConId nor TradingClass parameters in reqMktDepth.");
+                    return;
+                }
+
+                int version = 5;
 
                 try
                 {
@@ -2012,6 +2348,10 @@ namespace Krs.Ats.IBNet
                     send(tickerId);
 
                     //Request Contract Fields
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.ContractId);
+                    }
                     send(contract.Symbol);
                     send(EnumDescConverter.GetEnumDescription(contract.SecurityType));
                     send(contract.Expiry);
@@ -2026,9 +2366,19 @@ namespace Krs.Ats.IBNet
                     send(contract.Exchange);
                     send(contract.Currency);
                     send(contract.LocalSymbol);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
                     if (serverVersion >= 19)
                     {
                         send(numberOfRows);
+                    }
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        //int tagValuesCount = mktDepthOptions == null ? 0 : mktDepthOptions.Count;
+                        //send(tagValuesCount);
+                        send(TagValueListToString(mktDepthOptions));
                     }
                 }
                 catch (Exception e)
@@ -2043,6 +2393,339 @@ namespace Krs.Ats.IBNet
         }
 
         /// <summary>
+        /// Call this method to request market depth for a specific contract. The market depth will be returned by the updateMktDepth() and updateMktDepthL2() methods.
+        /// </summary>
+        /// <param name="reqId">the unique request idntifier.</param>
+        /// <param name="group">set to "All" to return account summary data for all accounts, or set to a specific Advisor Account Group name that has already been created in TWS Global Configuration.</param>
+        /// <param name="tags">tags a comma separated list with the desired tags:
+        ///      - AccountType
+        ///      - NetLiquidation,
+        ///      - TotalCashValue — Total cash including futures pnl
+        ///      - SettledCash — For cash accounts, this is the same as TotalCashValue
+        ///      - AccruedCash — Net accrued interest
+        ///      - BuyingPower — The maximum amount of marginable US stocks the account can buy
+        ///      - EquityWithLoanValue — Cash + stocks + bonds + mutual funds
+        ///      - PreviousEquityWithLoanValue,
+        ///      - GrossPositionValue — The sum of the absolute value of all stock and equity option positions
+        ///      - RegTEquity,
+        ///      - RegTMargin,
+        ///      - SMA — Special Memorandum Account
+        ///      - InitMarginReq,
+        ///      - MaintMarginReq,
+        ///      - AvailableFunds,
+        ///      - ExcessLiquidity,
+        ///      - Cushion — Excess liquidity as a percentage of net liquidation value
+        ///      - FullInitMarginReq,
+        ///      - FullMaintMarginReq,
+        ///      - FullAvailableFunds,
+        ///      - FullExcessLiquidity,
+        ///      - LookAheadNextChange — Time when look-ahead values take effect
+        ///      - LookAheadInitMarginReq,
+        ///      - LookAheadMaintMarginReq,
+        ///      - LookAheadAvailableFunds,
+        ///      - LookAheadExcessLiquidity,
+        ///      - HighestSeverity — A measure of how close the account is to liquidation
+        ///      - DayTradesRemaining — The Number of Open/Close trades a user could put on before Pattern Day Trading is detected. A value of "-1" means that the user can put on unlimited day trades.
+        ///      - Leverage — GrossPositionValue / NetLiquidation
+        /// </param>
+        public void RequestAccountSummary(int reqId, string group, string tags)
+        {
+            int VERSION = 1;
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.AcctSummary)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support account summary requests.");
+                return;
+            }
+
+
+            try
+            {
+                send((int)OutgoingMessage.RequestAccountSummary);
+                send(VERSION);
+                send(reqId);
+                send(group);
+                send(tags);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(reqId, ErrorMessage.FailSendRequestAccountData, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// After requesting an account's summary, invoke this function to cancel it.
+        /// </summary>
+        /// <param name="reqId">the identifier of the previously performed account request</param>
+        public void CancelAccountSummary(int reqId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.AcctSummary)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support account summary requests.");
+                return;
+            }
+
+            SendCancelRequest(OutgoingMessage.CancelAccountSummary, 1, reqId, ErrorMessage.FailSendCancelAccountData);
+        }
+
+        /// <summary>
+        /// Requests positions for account and/or model
+        /// </summary>
+        /// <param name="requestId">Request's identifier</param>
+        /// <param name="account">If an account Id is provided, only the account's positions belonging to the specified model will be delivered</param>
+        /// <param name="modelCode">The code of the model's positions we are interested in.</param>
+        public void RequestPositionsMulti(int requestId, string account, string modelCode)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.ModelsSupport)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support positions multi requests.");
+                return;
+            }
+
+            int version = 1;
+
+            try
+            {
+                send((int)OutgoingMessage.RequestPositionsMulti);
+                send(version);
+                send(requestId);
+                send(account);
+                send(modelCode);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(-1, ErrorMessage.FailSendRequestPositionsMulti, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Cancels positions request for account and/or model
+        /// </summary>
+        /// <param name="requestId"></param>
+        public void CancelPositionsMulti(int requestId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.ModelsSupport)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support positions multi requests.");
+                return;
+            }
+
+            int version = 1;
+
+            try
+            {
+                send((int)OutgoingMessage.CancelPositionsMulti);
+                send(version);
+                send(requestId);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(-1, ErrorMessage.FailSendCancelPositionsMulti, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Requests account updates for account and/or model
+        /// </summary>
+        /// <param name="requestId"></param>
+        /// <param name="account"></param>
+        /// <param name="modelCode"></param>
+        /// <param name="ledgerAndNLV"></param>
+        public void RequestAccountUpdatesMulti(int requestId, string account, string modelCode, bool ledgerAndNLV)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.ModelsSupport)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support positions multi requests.");
+                return;
+            }
+
+            int version = 1;
+
+            try
+            {
+                send((int)OutgoingMessage.RequestAccountUpdatesMulti);
+                send(version);
+                send(requestId);
+                send(account);
+                send(modelCode);
+                send(ledgerAndNLV);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(-1, ErrorMessage.FailSendCancelAccountUpdatesMulti, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Requests security definition option parameters for viewing a contract's option chain
+        /// </summary>
+        /// <param name="reqId">reqId the ID chosen for the request</param>
+        /// <param name="underlyingSymbol">underlyingSymbol</param>
+        /// <param name="futFopExchange">futFopExchange The exchange on which the returned options are trading. Can be set to the empty string "" for all exchanges.</param>
+        /// <param name="underlyingSecType">underlyingSecType The type of the underlying security, i.e. STK</param>
+        /// <param name="underlyingConId">underlyingConId the contract ID of the underlying security</param>
+        public void RequestSecurityDefinitionOptionParams(int reqId, string underlyingSymbol, string futFopExchange, string underlyingSecType, int underlyingConId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.SecDefOptParamsReq)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support security definition option parameters.");
+                return;
+            }
+
+            try
+            {
+                send((int)OutgoingMessage.RequestSecurityDefinitionOptionalParameters);
+                send(reqId);
+                send(underlyingSymbol);
+                send(futFopExchange);
+                send(underlyingSecType);
+                send(underlyingConId);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(-1, ErrorMessage.FailSendReqSecDefOptParams, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Cancels account updates request for account and/or model
+        /// </summary>
+        /// <param name="requestId"></param>
+        public void CancelAccountUpdatesMulti(int requestId)
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.ModelsSupport)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support positions multi cancelation.");
+                return;
+            }
+
+            int version = 1;
+
+            try
+            {
+                send((int)OutgoingMessage.CancelAccountUpdatesMulti);
+                send(version);
+                send(requestId);
+            }
+            catch (Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(-1, ErrorMessage.FailSendCancelAccountUpdatesMulti, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Requests all positions from all accounts
+        /// </summary>
+        public void RequestPositions()
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.AcctSummary)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support account summary requests.");
+                return;
+            }
+
+            const int VERSION = 1;
+
+            try
+            {
+                send((int)OutgoingMessage.RequestPositions);
+                send(VERSION);
+            }
+            catch(Exception e)
+            {
+                if (!(e is ObjectDisposedException || e is IOException) || throwExceptions)
+                    throw;
+
+                error(-1, ErrorMessage.FailSendRequestPositions, e);
+                close();
+            }
+        }
+
+        /// <summary>
+        /// Cancels all account's positions request
+        /// </summary>
+        public void CancelPositions()
+        {
+            if (!CheckConnection()) return;
+
+            if (serverVersion < MinServerVersion.AcctSummary)
+            {
+                error(ErrorMessage.UpdateTws, " It does not support account summary requests.");
+                return;
+            }
+
+            SendCancelRequest(OutgoingMessage.CancelPositions, 1, ErrorMessage.FailSendCancelPositions);
+        }
+
+        protected void SendCancelRequest(OutgoingMessage msgType, int version, int reqId, ErrorMessage errorMessage)
+        {
+            try
+            {
+                send((int)msgType);
+                send(version);
+                send(reqId);
+            }
+            catch (Exception e)
+            {
+                error(reqId, errorMessage, e);
+                close();
+            }
+        }
+
+        protected void SendCancelRequest(OutgoingMessage msgType, int version, ErrorMessage errorMessage)
+        {
+            try
+            {
+                send((int)msgType);
+                send(version);
+            }
+            catch (Exception e)
+            {
+                error(-1, errorMessage, e);
+                close();
+            }
+        }
+
+        /// <summary>
         /// After calling this method, market data for the specified Id will stop flowing.
         /// </summary>
         /// <param name="tickerId">the Id that was specified in the call to reqMktData().</param>
@@ -2050,12 +2733,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -2085,12 +2763,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 // This feature is only available for versions of TWS >=6
                 if (serverVersion < 6)
@@ -2146,14 +2819,9 @@ namespace Krs.Ats.IBNet
                 throw new ArgumentNullException("contract");
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(tickerId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
-                int version = 1;
+                int version = 2;
 
                 try
                 {
@@ -2163,9 +2831,22 @@ namespace Krs.Ats.IBNet
                         return;
                     }
 
+                    if ((!string.IsNullOrEmpty(contract.TradingClass) || contract.ContractId > 0) &&
+                        serverVersion < MinServerVersion.TradingClass)
+                    {
+                        error(ErrorMessage.UpdateTws, " It does not support conId not tradingClass parameter when exercising options.");
+                        return;
+                    }
+
                     send((int) OutgoingMessage.ExerciseOptions);
                     send(version);
                     send(tickerId);
+
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.ContractId);
+                    }
+
                     //Send Contract Fields
                     send(contract.Symbol);
                     send(EnumDescConverter.GetEnumDescription(contract.SecurityType));
@@ -2178,6 +2859,11 @@ namespace Krs.Ats.IBNet
                     send(contract.Exchange);
                     send(contract.Currency);
                     send(contract.LocalSymbol);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
+
                     send(exerciseAction);
                     send(exerciseQuantity);
                     send(account);
@@ -2209,161 +2895,13 @@ namespace Krs.Ats.IBNet
                 throw new ArgumentNullException("order");
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(orderId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
-                //Scale Orders Minimum Version is 35
-                if (serverVersion < MinServerVersion.ScaleOrders)
-                {
-                    if (order.ScaleInitLevelSize != Int32.MaxValue || order.ScalePriceIncrement != Int32.MaxValue || order.ScalePriceIncrement != decimal.MaxValue)
-                    {
-                        error(orderId, ErrorMessage.UpdateTws, "It does not support Scale orders.");
-                        return;
-                    }
-                }
+                if (VerifyOrder(orderId, contract, order)) return;
 
-                //Minimum Sell Short Combo Leg Order is 35
-                if (serverVersion < MinServerVersion.SshortComboLegs)
-                {
-                    if (!(contract.ComboLegs.Count == 0))
-                    {
-                        ComboLeg comboLeg;
-                        for (int i = 0; i < contract.ComboLegs.Count; ++i)
-                        {
-                            comboLeg = (ComboLeg)contract.ComboLegs[i];
-                            if (comboLeg.ShortSaleSlot != 0 || (!string.IsNullOrEmpty(comboLeg.DesignatedLocation)))
-                            {
-                                error(orderId, ErrorMessage.UpdateTws, "It does not support SSHORT flag for combo legs.");
-                                return;
-                            }
-                        }
-                    }
-                }
+                
 
-                if (serverVersion < MinServerVersion.WhatIfOrders)
-                {
-                    if(order.WhatIf)
-                    {
-                        error(orderId, ErrorMessage.UpdateTws, "It does not support what if orders.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.FundamentalData)
-                {
-                    if (contract.UnderlyingComponent != null)
-                    {
-                        error(orderId, ErrorMessage.UpdateTws, "It does not support delta-neutral orders.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.ScaleOrders2)
-                {
-                    if (order.ScaleSubsLevelSize != System.Int32.MaxValue)
-                    {
-                        error(orderId, ErrorMessage.UpdateTws, "It does not support Subsequent Level Size for Scale orders.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.AlgoOrders)
-                {
-                    if (!string.IsNullOrEmpty(order.AlgoStrategy))
-                    {
-                        error(orderId, ErrorMessage.UpdateTws, "It does not support algo orders.");
-                        return;
-                    }
-                }
-
-
-                if (serverVersion < MinServerVersion.NotHeld)
-                {
-                    if (order.NotHeld)
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support notHeld parameter.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.SecIdType)
-                {
-                    if (contract.SecIdType != SecurityIdType.None || !string.IsNullOrEmpty(contract.SecId))
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support secIdType and secId parameters.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.PlaceOrderConId)
-                {
-                    if (contract.ContractId > 0)
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support conId parameter.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.Sshortx)
-                {
-                    if (order.ExemptCode != -1)
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support exemptCode parameter.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.Sshortx)
-                {
-                    if (contract.ComboLegs.Count > 0)
-                    {
-                        foreach(var comboLeg in contract.ComboLegs)
-                        {
-                            if (comboLeg.ExemptCode != -1)
-                            {
-                                error(ErrorMessage.UpdateTws, "It does not support exemptCode parameter.");
-                                return;
-                            }
-                        }
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.HedgeOrders)
-                {
-                    if (!string.IsNullOrEmpty(order.HedgeType))
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support hedge orders.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.OptOutSmartRouting)
-                {
-                    if (order.OptOutSmartRouting)
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support optOutSmartRouting parameter.");
-                        return;
-                    }
-                }
-
-                if (serverVersion < MinServerVersion.DeltaNeutralConId)
-                {
-                    if (order.DeltaNeutralConId > 0
-                            || !string.IsNullOrEmpty(order.DeltaNeutralSettlingFirm)
-                            || !string.IsNullOrEmpty(order.DeltaNeutralClearingAccount)
-                            || !string.IsNullOrEmpty(order.DeltaNeutralClearingIntent)
-                            )
-                    {
-                        error(ErrorMessage.UpdateTws, "It does not support deltaNeutral parameters: ConId, SettlingFirm, ClearingAccount, ClearingIntent");
-                        return;
-                    }
-                }
-
-                int version = (serverVersion < MinServerVersion.NotHeld) ? 27 : 35;
+                int version = (serverVersion < MinServerVersion.NotHeld) ? 27 : 45;
 
                 // send place order msg
                 try
@@ -2373,8 +2911,10 @@ namespace Krs.Ats.IBNet
                     send(orderId);
 
                     // send contract fields
-                    if (serverVersion >= 46)
+                    if (serverVersion >= MinServerVersion.PlaceOrderConId)
+                    {
                         send(contract.ContractId);
+                    }
                     send(contract.Symbol);
                     send(EnumDescConverter.GetEnumDescription(contract.SecurityType));
                     send(contract.Expiry);
@@ -2396,7 +2936,11 @@ namespace Krs.Ats.IBNet
                     {
                         send(contract.LocalSymbol);
                     }
-                    if (serverVersion >= 45)
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        send(contract.TradingClass);
+                    }
+                    if (serverVersion >= MinServerVersion.SecIdType)
                     {
                         send(EnumDescConverter.GetEnumDescription(contract.SecIdType));
                         send(contract.SecId);
@@ -2404,10 +2948,31 @@ namespace Krs.Ats.IBNet
 
                     // send main order fields
                     send(EnumDescConverter.GetEnumDescription(order.Action));
-                    send(order.TotalQuantity);
+
+                    if (ServerVersion >= MinServerVersion.FractionalPositions)
+                        send(order.TotalQuantity);
+                    else
+                        send((int)order.TotalQuantity);
+
                     send(EnumDescConverter.GetEnumDescription(order.OrderType));
-                    send(order.LimitPrice);
-                    send(order.AuxPrice);
+
+                    if (serverVersion < MinServerVersion.OrdercomboLegsPrice)
+                    {
+                        send(order.LimitPrice == decimal.MaxValue ? 0 : order.LimitPrice);
+                    }
+                    else
+                    {
+                        sendMax(order.LimitPrice);
+                    }
+
+                    if (serverVersion < MinServerVersion.TrailingPercent)
+                    {
+                        send(order.AuxPrice == decimal.MaxValue ? 0 : order.AuxPrice);
+                    }
+                    else
+                    {
+                        sendMax(order.AuxPrice);
+                    }
 
                     // send extended order fields
                     send(EnumDescConverter.GetEnumDescription(order.Tif));
@@ -2476,6 +3041,25 @@ namespace Krs.Ats.IBNet
                         }
                     }
 
+                    // add order combo legs for BAG requests
+                    if (serverVersion >= MinServerVersion.OrdercomboLegsPrice && contract.SecurityType == SecurityType.Bag)
+                    {
+                        if (order.OrderComboLegs == null)
+                        {
+                            send(0);
+                        }
+                        else
+                        {
+                            send(order.OrderComboLegs.Count);
+
+                            for (int i = 0; i < order.OrderComboLegs.Count; i++)
+                            {
+                                OrderComboLeg orderComboLeg = order.OrderComboLegs[i];
+                                send(orderComboLeg.Price);
+                            }
+                        }
+                    }
+
                     if (serverVersion >= MinServerVersion.SmartComboRoutingParams && contract.SecurityType == SecurityType.Bag)
                     {
                         Collection<TagValue> smartComboRoutingParams = order.SmartComboRoutingParams;
@@ -2519,6 +3103,12 @@ namespace Krs.Ats.IBNet
                         send(order.FAPercentage);
                         send(order.FAProfile);
                     }
+
+                    if (serverVersion >= MinServerVersion.ModelsSupport)
+                    {
+                        send(order.ModelCode);
+                    }
+
                     if (serverVersion >= 18)
                     {
                         // institutional short sale slot fields.
@@ -2526,7 +3116,7 @@ namespace Krs.Ats.IBNet
                         send(order.DesignatedLocation); // only populate when order.shortSaleSlot = 2.
                     }
 
-                    if (serverVersion >= 51)
+                    if (serverVersion >= MinServerVersion.SshortxOld)
                         send(order.ExemptCode);
 
                     if (serverVersion >= 19)
@@ -2579,12 +3169,22 @@ namespace Krs.Ats.IBNet
                             send(EnumDescConverter.GetEnumDescription(order.DeltaNeutralOrderType));
                             sendMax(order.DeltaNeutralAuxPrice);
 
-                            if (serverVersion >= MinServerVersion.DeltaNeutralConId && order.DeltaNeutralOrderType != OrderType.Empty)
+                            if (serverVersion >= MinServerVersion.DeltaNeutralConId && 
+                                order.DeltaNeutralOrderType != OrderType.Empty)
                             {
                                 send(order.DeltaNeutralConId);
                                 send(order.DeltaNeutralSettlingFirm);
                                 send(order.DeltaNeutralClearingAccount);
                                 send(order.DeltaNeutralClearingIntent);
+                            }
+
+                            if (serverVersion >= MinServerVersion.DeltaNeutralOpenClose &&
+                                order.DeltaNeutralOrderType != OrderType.Empty)
+                            {
+                                send(order.DeltaNeutralOpenClose);
+                                send(order.DeltaNeutralShortSale);
+                                send(order.DeltaNeutralShortSaleSlot);
+                                send(order.DeltaNeutralDesignatedLocation);
                             }
                         }
                         send(order.ContinuousUpdate);
@@ -2609,6 +3209,11 @@ namespace Krs.Ats.IBNet
                         sendMax(order.TrailStopPrice);
                     }
 
+                    if (serverVersion >= MinServerVersion.TrailingPercent)
+                    {
+                        sendMax(order.TrailingPercent);
+                    }
+
                     //Scale Orders require server version 35 or higher.
                     if (serverVersion >= MinServerVersion.ScaleOrders)
                     {
@@ -2623,6 +3228,24 @@ namespace Krs.Ats.IBNet
                             sendMax(order.ScaleInitLevelSize);
                         }
                         sendMax(order.ScalePriceIncrement);
+                    }
+
+                    if (serverVersion >= MinServerVersion.ScaleOrders3 && order.ScalePriceIncrement > 0.0m && order.ScalePriceIncrement != decimal.MaxValue)
+                    {
+                        sendMax(order.ScalePriceAdjustValue);
+                        sendMax(order.ScalePriceAdjustInterval);
+                        sendMax(order.ScaleProfitOffset);
+                        send(order.ScaleAutoReset);
+                        sendMax(order.ScaleInitPosition);
+                        sendMax(order.ScaleInitFillQty);
+                        send(order.ScaleRandomPercent);
+                    }
+
+                    if (serverVersion >= MinServerVersion.ScaleTable)
+                    {
+                        send(order.ScaleTable);
+                        send(order.ActiveStartTime);
+                        send(order.ActiveStopTime);
                     }
 
                     if (serverVersion >= MinServerVersion.HedgeOrders)
@@ -2685,9 +3308,71 @@ namespace Krs.Ats.IBNet
                         }
                     }
 
-                    if(serverVersion >= MinServerVersion.WhatIfOrders)
+                    if (serverVersion >= MinServerVersion.AlgoID)
+                    {
+                        send(order.AlgoId);
+                    }
+
+                    if (serverVersion >= MinServerVersion.WhatIfOrders)
                     {
                         send(order.WhatIf);
+                    }
+
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        //int orderOptionsCount = order.OrderMiscOptions == null ? 0 : order.OrderMiscOptions.Count;
+                        //send(orderOptionsCount);
+                        send(TagValueListToString(order.OrderMiscOptions));
+                    }
+
+                    if (serverVersion >= MinServerVersion.OrderSolicited)
+                    {
+                        send(order.Solicited);
+                    }
+
+                    if (serverVersion >= MinServerVersion.RandomizeSizeAndPrice)
+                    {
+                        send(order.RandomizeSize);
+                        send(order.RandomizePrice);
+                    }
+
+                    if (serverVersion >= MinServerVersion.PeggedToBenchmark)
+                    {
+                        if (order.OrderType == OrderType.PeggedToBenchmark)
+                        {
+                            send(order.ReferenceContractId);
+                            send(order.IsPeggedChangeAmountDecrease);
+                            send(order.PeggedChangeAmount);
+                            send(order.ReferenceChangeAmount);
+                            send(order.ReferenceExchange);
+                        }
+
+                        send(order.Conditions.Count);
+
+                        if (order.Conditions.Count > 0)
+                        {
+                            foreach (OrderCondition item in order.Conditions)
+                            {
+                                send((int)item.Type);
+                                item.Serialize(dos);
+                            }
+
+                            send(order.ConditionsIgnoreRth);
+                            send(order.ConditionsCancelOrder);
+                        }
+
+                        send(order.AdjustedOrderType);
+                        send(order.TriggerPrice);
+                        send(order.LmtPriceOffset);
+                        send(order.AdjustedStopPrice);
+                        send(order.AdjustedStopLimitPrice);
+                        send(order.AdjustedTrailingAmount);
+                        send(order.AdjustableTrailingUnit);
+                    }
+
+                    if (serverVersion >= MinServerVersion.ExtOperator)
+                    {
+                        send(order.ExtOperator);
                     }
                 }
                 catch (Exception e)
@@ -2701,6 +3386,258 @@ namespace Krs.Ats.IBNet
             }
         }
 
+        private bool VerifyOrder(int orderId, Contract contract, Order order)
+        {
+            //Scale Orders Minimum Version is 35
+            if (serverVersion < MinServerVersion.ScaleOrders)
+            {
+                if (order.ScaleInitLevelSize != Int32.MaxValue || order.ScalePriceIncrement != Int32.MaxValue ||
+                    order.ScalePriceIncrement != decimal.MaxValue)
+                {
+                    error(orderId, ErrorMessage.UpdateTws, "It does not support Scale orders.");
+                    return true;
+                }
+            }
+
+            //Minimum Sell Short Combo Leg Order is 35
+            if (serverVersion < MinServerVersion.SshortComboLegs)
+            {
+                if (contract.ComboLegs.Count != 0)
+                {
+                    ComboLeg comboLeg;
+                    for (int i = 0; i < contract.ComboLegs.Count; ++i)
+                    {
+                        comboLeg = (ComboLeg) contract.ComboLegs[i];
+                        if (comboLeg.ShortSaleSlot != 0 || (!string.IsNullOrEmpty(comboLeg.DesignatedLocation)))
+                        {
+                            error(orderId, ErrorMessage.UpdateTws, "It does not support SSHORT flag for combo legs.");
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (serverVersion < MinServerVersion.WhatIfOrders)
+            {
+                if (order.WhatIf)
+                {
+                    error(orderId, ErrorMessage.UpdateTws, "It does not support what if orders.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.FundamentalData)
+            {
+                if (contract.UnderlyingComponent != null)
+                {
+                    error(orderId, ErrorMessage.UpdateTws, "It does not support delta-neutral orders.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.ScaleOrders2)
+            {
+                if (order.ScaleSubsLevelSize != System.Int32.MaxValue)
+                {
+                    error(orderId, ErrorMessage.UpdateTws, "It does not support Subsequent Level Size for Scale orders.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.AlgoOrders)
+            {
+                if (!string.IsNullOrEmpty(order.AlgoStrategy))
+                {
+                    error(orderId, ErrorMessage.UpdateTws, "It does not support algo orders.");
+                    return true;
+                }
+            }
+
+
+            if (serverVersion < MinServerVersion.NotHeld)
+            {
+                if (order.NotHeld)
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support notHeld parameter.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.SecIdType)
+            {
+                if (contract.SecIdType != SecurityIdType.None || !string.IsNullOrEmpty(contract.SecId))
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support secIdType and secId parameters.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.PlaceOrderConId)
+            {
+                if (contract.ContractId > 0)
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support conId parameter.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.Sshortx)
+            {
+                if (order.ExemptCode != -1)
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support exemptCode parameter.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.Sshortx)
+            {
+                if (contract.ComboLegs.Count > 0)
+                {
+                    foreach (var comboLeg in contract.ComboLegs)
+                    {
+                        if (comboLeg.ExemptCode != -1)
+                        {
+                            error(ErrorMessage.UpdateTws, "It does not support exemptCode parameter.");
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (serverVersion < MinServerVersion.TradingClass)
+            {
+                if (!string.IsNullOrEmpty(contract.TradingClass))
+                {
+                    error(ErrorMessage.UpdateTws,
+                        "  It does not support tradingClass parameters in placeOrder.");
+                    return false;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.HedgeOrders)
+            {
+                if (!string.IsNullOrEmpty(order.HedgeType))
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support hedge orders.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.OptOutSmartRouting)
+            {
+                if (order.OptOutSmartRouting)
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support optOutSmartRouting parameter.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.DeltaNeutralConId)
+            {
+                if (order.DeltaNeutralConId > 0
+                        || !string.IsNullOrEmpty(order.DeltaNeutralSettlingFirm)
+                        || !string.IsNullOrEmpty(order.DeltaNeutralClearingAccount)
+                        || !string.IsNullOrEmpty(order.DeltaNeutralClearingIntent)
+                        )
+                {
+                    error(ErrorMessage.UpdateTws, "It does not support deltaNeutral parameters: ConId, SettlingFirm, ClearingAccount, ClearingIntent");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.DeltaNeutralOpenClose)
+            {
+                if (!string.IsNullOrEmpty(order.DeltaNeutralOpenClose)
+                        || order.DeltaNeutralShortSale
+                        || order.DeltaNeutralShortSaleSlot > 0
+                        || !string.IsNullOrEmpty(order.DeltaNeutralDesignatedLocation)
+                        )
+                {
+                    error(ErrorMessage.UpdateTws,
+                        "  It does not support deltaNeutral parameters: OpenClose, ShortSale, ShortSaleSlot, DesignatedLocation");
+                    return false;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.ScaleOrders3)
+            {
+                if (order.ScalePriceIncrement > 0 && order.ScalePriceIncrement != decimal.MaxValue)
+                {
+                    if (order.ScalePriceAdjustValue != Double.MaxValue ||
+                        order.ScalePriceAdjustInterval != Int32.MaxValue ||
+                        order.ScaleProfitOffset != Double.MaxValue ||
+                        order.ScaleAutoReset ||
+                        order.ScaleInitPosition != Int32.MaxValue ||
+                        order.ScaleInitFillQty != Int32.MaxValue ||
+                        order.ScaleRandomPercent)
+                    {
+                        error(ErrorMessage.UpdateTws,
+                            "  It does not support Scale order parameters: PriceAdjustValue, PriceAdjustInterval, " +
+                            "ProfitOffset, AutoReset, InitPosition, InitFillQty and RandomPercent");
+                        return true;
+                    }
+                }
+            }
+
+            if (serverVersion < MinServerVersion.OrdercomboLegsPrice && contract.SecurityType == SecurityType.Bag)
+            {
+                if (order.OrderComboLegs.Count > 0)
+                {
+                    OrderComboLeg orderComboLeg;
+                    for (int i = 0; i < order.OrderComboLegs.Count; ++i)
+                    {
+                        orderComboLeg = (OrderComboLeg)order.OrderComboLegs[i];
+                        if (orderComboLeg.Price != Double.MaxValue)
+                        {
+                            error(ErrorMessage.UpdateTws,
+                                "  It does not support per-leg prices for order combo legs.");
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (serverVersion < MinServerVersion.TrailingPercent)
+            {
+                if (order.TrailingPercent != Double.MaxValue)
+                {
+                    error(ErrorMessage.UpdateTws,
+                        "  It does not support trailing percent parameter.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.AlgoID && !string.IsNullOrEmpty(order.AlgoId))
+            {
+                error(ErrorMessage.UpdateTws, " It does not support algoId parameter");
+
+                return true;
+            }
+
+            if (serverVersion < MinServerVersion.ScaleTable)
+            {
+                if (!string.IsNullOrEmpty(order.ScaleTable) || 
+                    !string.IsNullOrEmpty(order.ActiveStartTime) || 
+                    !string.IsNullOrEmpty(order.ActiveStopTime))
+                {
+                    error(ErrorMessage.UpdateTws,
+                        "  It does not support scaleTable, activeStartTime nor activeStopTime parameters.");
+                    return true;
+                }
+            }
+
+            if (serverVersion < MinServerVersion.ExtOperator && !string.IsNullOrEmpty(order.ExtOperator))
+            {
+                error(ErrorMessage.UpdateTws, " It does not support extOperator parameter");
+
+                return true;
+            }
+
+
+            return false;
+        }
+
         /// <summary>
         /// Call this function to start getting account values, portfolio, and last update time information.
         /// </summary>
@@ -2710,12 +3647,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 2;
 
@@ -2754,12 +3686,7 @@ namespace Krs.Ats.IBNet
                 filter = new ExecutionFilter(0, "", DateTime.MinValue, "", SecurityType.Undefined, "", ActionSide.Undefined);
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 3;
 
@@ -2769,7 +3696,7 @@ namespace Krs.Ats.IBNet
                     send((int) OutgoingMessage.RequestExecutions);
                     send(version);
 
-                    if (serverVersion >= 42)
+                    if (serverVersion >= MinServerVersion.ExecutionDataChain)
                     {
                         send(requestId);
                     }
@@ -2806,12 +3733,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(orderId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -2841,12 +3763,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -2875,12 +3792,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -2909,12 +3821,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -2942,12 +3849,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -2978,12 +3880,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -3014,12 +3911,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -3049,12 +3941,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -3088,12 +3975,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 // This feature is only available for versions of TWS >= 13
                 if (serverVersion < 13)
@@ -3134,12 +4016,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 // This feature is only available for versions of TWS >= 13
                 if (serverVersion < 13)
@@ -3175,12 +4052,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 // This feature is only available for versions of TWS >= 33
                 if (serverVersion < 33)
@@ -3213,15 +4085,12 @@ namespace Krs.Ats.IBNet
         /// <param name="requestId">Request Id</param>
         /// <param name="contract">Contract to request fundamental data for</param>
         /// <param name="reportType">Report Type</param>
-        public virtual void RequestFundamentalData(int requestId, Contract contract, String reportType)
+        /// <param name="fundamentalDataOptions"></param>
+        public virtual void RequestFundamentalData(int requestId, Contract contract, String reportType, List<TagValue> fundamentalDataOptions = null)
         {
             lock (this)
             {
-                if (!connected)
-                {
-                    error(requestId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < MinServerVersion.FundamentalData)
                 {
@@ -3229,7 +4098,18 @@ namespace Krs.Ats.IBNet
                     return;
                 }
 
-                int version = 1;
+                if (!string.IsNullOrEmpty(contract.TradingClass) || 
+                    contract.ContractId > 0 || 
+                    !string.IsNullOrEmpty(contract.Multiplier))
+                {
+                    if (serverVersion < MinServerVersion.TradingClass)
+                    {
+                        error(requestId, ErrorMessage.UpdateTws, "It does not support fundamental data requests w/ trading class.");
+                        return;
+                    }
+                }
+
+                int version = 3;
 
                 try
                 {
@@ -3238,6 +4118,12 @@ namespace Krs.Ats.IBNet
                     send(version);
                     send(requestId);
 
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                    {
+                        //TODO: why are we checking the trading class and multiplier above never send them?
+                        send(contract.ContractId);
+                    }
+
                     // send contract fields
                     send(contract.Symbol);
                     send(EnumDescConverter.GetEnumDescription(contract.SecurityType));
@@ -3245,8 +4131,14 @@ namespace Krs.Ats.IBNet
                     send(contract.PrimaryExchange);
                     send(contract.Currency);
                     send(contract.LocalSymbol);
-
                     send(reportType);
+
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        int tagValuesCount = fundamentalDataOptions == null ? 0 : fundamentalDataOptions.Count;
+                        send(tagValuesCount);
+                        send(TagValueListToString(fundamentalDataOptions));
+                    }
                 }
                 catch (Exception e)
                 {
@@ -3264,11 +4156,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                if (!connected)
-                {
-                    error(requestId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < MinServerVersion.FundamentalData)
                 {
@@ -3299,11 +4187,7 @@ namespace Krs.Ats.IBNet
         /// <param name="reqId">The Ticker Id.</param>
         public virtual void CancelCalculateImpliedVolatility(int reqId)
         {
-            if (!connected)
-            {
-                error(ErrorMessage.NotConnected);
-                return;
-            }
+            if (!CheckConnection()) return;
 
             if (serverVersion < MinServerVersion.CancelCalculateImpliedVolatility)
             {
@@ -3335,15 +4219,12 @@ namespace Krs.Ats.IBNet
         /// <param name="contract">Contract</param>
         /// <param name="optionPrice">Price of the option</param>
         /// <param name="underPrice">Price of teh underlying of the option</param>
-        public virtual void RequestCalculateImpliedVolatility(int requestId, Contract contract, double optionPrice, double underPrice)
+        /// <param name="impliedVolatilityOptions"></param>
+        public virtual void RequestCalculateImpliedVolatility(int requestId, Contract contract, double optionPrice, double underPrice, List<TagValue> impliedVolatilityOptions = null)
         {    
             lock(this)
             {
-                if (!connected)
-                {
-                    error(requestId, ErrorMessage.NotConnected);
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 if (serverVersion < MinServerVersion.RequestCalculateImpliedVolatility)
                 {
@@ -3351,7 +4232,10 @@ namespace Krs.Ats.IBNet
                     return;
                 }
 
-                const int version = 1;
+                if (!string.IsNullOrEmpty(contract.TradingClass) && ServerVersion < MinServerVersion.TradingClass)
+                    return;
+
+                const int version = 3;
 
                 try
                 {
@@ -3374,9 +4258,18 @@ namespace Krs.Ats.IBNet
                     send(contract.PrimaryExchange);
                     send(contract.Currency);
                     send(contract.LocalSymbol);
+                    if (serverVersion >= MinServerVersion.TradingClass)
+                        send(contract.TradingClass);
 
                     send(optionPrice);
                     send(underPrice);
+
+                    if (serverVersion >= MinServerVersion.Linking)
+                    {
+                        int tagValuesCount = impliedVolatilityOptions == null ? 0 : impliedVolatilityOptions.Count;
+                        send(tagValuesCount);
+                        send(TagValueListToString(impliedVolatilityOptions));
+                    }
                 }
                 catch (Exception e)
                 {
@@ -3389,6 +4282,19 @@ namespace Krs.Ats.IBNet
             }
         }
 
+        private string TagValueListToString(List<TagValue> tagValues)
+        {
+            StringBuilder tagValuesStr = new StringBuilder();
+            int tagValuesCount = tagValues == null ? 0 : tagValues.Count;
+
+            for (int i = 0; i < tagValuesCount; i++)
+            {
+                TagValue tagValue = tagValues[i];
+                tagValuesStr.Append(tagValue.Tag).Append("=").Append(tagValue.Value).Append(";");
+            }
+            return tagValuesStr.ToString();
+        }
+
         /// <summary>
         /// Call this function to calculate option price and greek values for a supplied volatility and underlying price.
         /// </summary>
@@ -3396,14 +4302,11 @@ namespace Krs.Ats.IBNet
         /// <param name="contract">Describes the contract.</param>
         /// <param name="volatility">The volatility.</param>
         /// <param name="underPrice">Price of the underlying.</param>
+        /// <param name="optionPriceOptions"></param>
         public virtual void RequestCalculateOptionPrice(int reqId, Contract contract, double volatility,
-                                                        double underPrice)
+                                                        double underPrice, List<TagValue> optionPriceOptions = null)
         {
-            if (!connected)
-            {
-                error(ErrorMessage.NotConnected);
-                return;
-            }
+            if (!CheckConnection()) return;
 
             if (serverVersion < MinServerVersion.RequestCalculateOptionPrice)
             {
@@ -3411,7 +4314,7 @@ namespace Krs.Ats.IBNet
                 return;
             }
 
-            const int version = 1;
+            const int version = 3;
 
             try
             {
@@ -3432,9 +4335,18 @@ namespace Krs.Ats.IBNet
                 send(contract.PrimaryExchange);
                 send(contract.Currency);
                 send(contract.LocalSymbol);
+                if (serverVersion >= MinServerVersion.TradingClass)
+                    send(contract.TradingClass);
 
                 send(volatility);
                 send(underPrice);
+
+                if (serverVersion >= MinServerVersion.Linking)
+                {
+                    int tagValuesCount = optionPriceOptions == null ? 0 : optionPriceOptions.Count;
+                    send(tagValuesCount);
+                    send(TagValueListToString(optionPriceOptions));
+                }
             }
             catch (Exception e)
             {
@@ -3449,11 +4361,7 @@ namespace Krs.Ats.IBNet
         /// <param name="reqId">The ticker id.</param>
         public virtual void CancelCalculateOptionPrice(int reqId)
         {
-            if (!connected)
-            {
-                error(ErrorMessage.NotConnected);
-                return;
-            }
+            if (!CheckConnection()) return;
 
             if (serverVersion < MinServerVersion.CancelCalculateOptionPrice)
             {
@@ -3482,12 +4390,7 @@ namespace Krs.Ats.IBNet
         /// </summary>
         public virtual void RequestGlobalCancel()
         {
-            // not connected?
-            if (!connected)
-            {
-                error(ErrorMessage.NotConnected);
-                return;
-            }
+            if (!CheckConnection()) return;
 
             if (serverVersion < MinServerVersion.RequestGlobalCancel)
             {
@@ -3520,12 +4423,7 @@ namespace Krs.Ats.IBNet
         /// <param name="marketDataType">1 for real-time streaming market data or 2 for frozen market data.</param>
         public virtual void RequestMarketDataType(int marketDataType)
         {
-            // not connected?
-            if (!connected)
-            {
-                error(ErrorMessage.NotConnected);
-                return;
-            }
+            if (!CheckConnection()) return;
 
             if (serverVersion < MinServerVersion.RequestMarketDataType)
             {
@@ -3564,12 +4462,7 @@ namespace Krs.Ats.IBNet
         {
             lock (this)
             {
-                // not connected?
-                if (!connected)
-                {
-                    error(ErrorMessage.NotConnected, "");
-                    return;
-                }
+                if (!CheckConnection()) return;
 
                 int version = 1;
 
@@ -4009,8 +4902,8 @@ namespace Krs.Ats.IBNet
                         string orderstat = ReadStr();
                         Krs.Ats.IBNet.OrderStatus status = (string.IsNullOrEmpty(orderstat) ? Krs.Ats.IBNet.OrderStatus.None :
                             (Krs.Ats.IBNet.OrderStatus) EnumDescConverter.GetEnumValue(typeof (Krs.Ats.IBNet.OrderStatus), orderstat));
-                        int filled = ReadInt();
-                        int remaining = ReadInt();
+                        double filled = serverVersion >= MinServerVersion.FractionalPositions ? ReadDouble() : (double)ReadInt();
+                        double remaining = serverVersion >= MinServerVersion.FractionalPositions ? ReadDouble() : (double)ReadInt();
                         decimal avgFillPrice = ReadDecimal();
 
                         int permId = 0;
@@ -4095,8 +4988,12 @@ namespace Krs.Ats.IBNet
                         {
                             contract.LocalSymbol = ReadStr();
                         }
+                        if (version >= 8)
+                        {
+                            contract.TradingClass = ReadStr();
+                        }
 
-                        int position = ReadInt();
+                        double position = serverVersion >= MinServerVersion.FractionalPositions ? ReadDouble() : (double)ReadInt();
                         decimal marketPrice = ReadDecimal();
                         decimal marketValue = ReadDecimal();
                         decimal averageCost = 0.0m;
@@ -4185,10 +5082,14 @@ namespace Krs.Ats.IBNet
                         {
                             contract.LocalSymbol = ReadStr();
                         }
+                        if (version >= 32)
+                        {
+                            contract.TradingClass = ReadStr();
+                        }
 
                         // read order fields
                         order.Action = (ActionSide) EnumDescConverter.GetEnumValue(typeof (ActionSide), ReadStr());
-                        order.TotalQuantity = ReadInt();
+                        order.TotalQuantity = serverVersion >= MinServerVersion.FractionalPositions ? ReadDouble() : (double)ReadInt();
                         order.OrderType = (OrderType) EnumDescConverter.GetEnumValue(typeof (OrderType), ReadStr());
                         order.LimitPrice = ReadDecimal();
                         order.AuxPrice = ReadDecimal();
@@ -4239,6 +5140,11 @@ namespace Krs.Ats.IBNet
                             order.FAMethod = (string.IsNullOrEmpty(fam) ? FinancialAdvisorAllocationMethod.None : (FinancialAdvisorAllocationMethod)EnumDescConverter.GetEnumValue(typeof(FinancialAdvisorAllocationMethod), fam));
                             order.FAPercentage = ReadStr();
                             order.FAProfile = ReadStr();
+                        }
+
+                        if (serverVersion >= MinServerVersion.ModelsSupport)
+                        {
+                            order.ModelCode = ReadStr();
                         }
 
                         if (version >= 8)
@@ -4483,6 +5389,11 @@ namespace Krs.Ats.IBNet
                             }
                         }
 
+                        if (version >= 33)
+                        {
+                            order.Solicited = ReadBoolFromInt();
+                        }
+
                         OrderState orderState = new OrderState();
 
                         if (version >= 16)
@@ -4502,7 +5413,52 @@ namespace Krs.Ats.IBNet
                             orderState.WarningText = ReadStr();
                         }
 
+                        if (version >= 34)
+                        {
+                            order.RandomizeSize = ReadBoolFromInt();
+                            order.RandomizePrice = ReadBoolFromInt();
+                        }
+
+                        if (serverVersion >= MinServerVersion.PeggedToBenchmark)
+                        {
+                            if (order.OrderType == OrderType.PeggedToBenchmark)
+                            {
+                                order.ReferenceContractId = ReadInt();
+                                order.IsPeggedChangeAmountDecrease = ReadBoolFromInt();
+                                order.PeggedChangeAmount = ReadDoubleMax();
+                                order.ReferenceChangeAmount = ReadDoubleMax();
+                                order.ReferenceExchange = ReadStr();
+                            }
+
+                            int nConditions = ReadInt();
+
+                            if (nConditions > 0)
+                            {
+                                for (int i = 0; i < nConditions; i++)
+                                {
+                                    OrderConditionType orderConditionType = (OrderConditionType)ReadInt();
+                                    OrderCondition condition = OrderCondition.Create(orderConditionType);
+
+                                    condition.Deserialize(dis);
+                                    order.Conditions.Add(condition);
+                                }
+
+                                order.ConditionsIgnoreRth = ReadBoolFromInt();
+                                order.ConditionsCancelOrder = ReadBoolFromInt();
+                            }
+
+                            order.AdjustedOrderType = ReadStr();
+                            order.TriggerPrice = ReadDoubleMax();
+                            order.TrailStopPrice = (decimal)ReadDoubleMax();
+                            order.LmtPriceOffset = ReadDoubleMax();
+                            order.AdjustedStopPrice = ReadDoubleMax();
+                            order.AdjustedStopLimitPrice = ReadDoubleMax();
+                            order.AdjustedTrailingAmount = ReadDoubleMax();
+                            order.AdjustableTrailingUnit = ReadInt();
+                        }
+
                         openOrder(order.OrderId, contract, order, orderState);
+
                         break;
                     }
 
@@ -4584,7 +5540,7 @@ namespace Krs.Ats.IBNet
                         contract.Summary.Currency = ReadStr();
                         contract.Summary.LocalSymbol = ReadStr();
                         contract.MarketName = ReadStr();
-                        contract.TradingClass = ReadStr();
+                        contract.Summary.TradingClass = ReadStr();
                         contract.Summary.ContractId = ReadInt();
                         contract.MinTick = ReadDouble();
                         contract.Summary.Multiplier = ReadStr();
@@ -4663,7 +5619,7 @@ namespace Krs.Ats.IBNet
                         contract.Summary.Exchange = ReadStr();
                         contract.Summary.Currency = ReadStr();
                         contract.MarketName = ReadStr();
-                        contract.TradingClass = ReadStr();
+                        contract.Summary.TradingClass = ReadStr();
                         contract.Summary.ContractId = ReadInt();
                         contract.MinTick = ReadDouble();
                         contract.OrderTypes = ReadStr();
@@ -4679,6 +5635,27 @@ namespace Krs.Ats.IBNet
                         {
                             contract.LongName = ReadStr();
                         }
+
+                        if (version >= 6)
+                        {
+                            contract.EVRule = ReadStr();
+                            contract.EVMultiplier = ReadDouble();
+                        }
+                        if (version >= 5)
+                        {
+                            int secIdListCount = ReadInt();
+                            if (secIdListCount > 0)
+                            {
+                                contract.SecurityIDs = new Dictionary<string, string>();
+                                for (int i = 0; i < secIdListCount; ++i)
+                                {
+                                    string tag = ReadStr();
+                                    string value = ReadStr();
+                                    contract.SecurityIDs.Add(tag, value);
+                                }
+                            }
+                        }
+
                         bondContractDetails(reqId, contract);
                         break;
                     }
@@ -4721,6 +5698,10 @@ namespace Krs.Ats.IBNet
                         contract.Exchange = ReadStr();
                         contract.Currency = ReadStr();
                         contract.LocalSymbol = ReadStr();
+                        if (version >= 10)
+                        {
+                            contract.TradingClass = ReadStr();
+                        }
 
                         Execution exec = new Execution();
                         exec.OrderId = orderId;
@@ -4729,7 +5710,7 @@ namespace Krs.Ats.IBNet
                         exec.AccountNumber = ReadStr();
                         exec.Exchange = ReadStr();
                         exec.Side = (ExecutionSide) EnumDescConverter.GetEnumValue(typeof (ExecutionSide), ReadStr());
-                        exec.Shares = ReadInt();
+                        exec.Shares = serverVersion >= MinServerVersion.FractionalPositions ? ReadDouble() : (double)ReadInt();
                         exec.Price = ReadDouble();
                         if (version >= 2)
                         {
@@ -4756,6 +5737,10 @@ namespace Krs.Ats.IBNet
                         {
                             exec.EvRule = ReadStr();
                             exec.EvMultipler = ReadDouble();
+                        }
+                        if (serverVersion >= MinServerVersion.ModelsSupport)
+                        {
+                            exec.ModelCode = ReadStr();
                         }
 
                         execDetails(reqId, orderId, contract, exec);
@@ -4987,6 +5972,200 @@ namespace Krs.Ats.IBNet
                         report.YieldRedemptionDate = ReadNullableDateInt();
 
                         commissionReport(report);
+                        break;
+                    }
+                case IncomingMessage.Position:
+                    {
+                        int msgVersion = ReadInt();
+                        string account = ReadStr();
+                        Contract contract = new Contract();
+                        contract.ContractId = ReadInt();
+                        contract.Symbol = ReadStr();
+                        contract.SecurityType = (SecurityType)EnumDescConverter.GetEnumValue(typeof(SecurityType), ReadStr());
+                        contract.Expiry = ReadStr();
+                        contract.Strike = ReadDouble();
+                        contract.Right = (RightType)EnumDescConverter.GetEnumValue(typeof(RightType), ReadStr());
+                        contract.Multiplier = ReadStr();
+                        contract.Exchange = ReadStr();
+                        contract.Currency = ReadStr();
+                        contract.LocalSymbol = ReadStr();
+                        if (msgVersion >= 2)
+                        {
+                            contract.TradingClass = ReadStr();
+                        }
+
+                        var pos = serverVersion >= MinServerVersion.FractionalPositions ? ReadDouble() : (double)ReadInt();
+                        double avgCost = 0;
+                        if (msgVersion >= 3)
+                            avgCost = ReadDouble();
+
+                        position(account, contract, pos, avgCost);
+                        break;
+                    }
+                case IncomingMessage.PositionEnd:
+                    {
+                        int msgVersion = ReadInt();
+                        positionEnd();
+                        break;
+                    }
+                case IncomingMessage.AccountSummary:
+                    {
+                        int msgVersion = ReadInt();
+                        int requestId = ReadInt();
+                        string account = ReadStr();
+                        string tag = ReadStr();
+                        string value = ReadStr();
+                        string currency = ReadStr();
+                        accountSummary(requestId, account, tag, value, currency);
+                        break;
+                    }
+                case IncomingMessage.AccountSummaryEnd:
+                    {
+                        int msgVersion = ReadInt();
+                        int requestId = ReadInt();
+                        accountSummaryEnd(requestId);
+                        break;
+                    }
+                case IncomingMessage.VerifyMessageApi:
+                    {
+                        int msgVersion = ReadInt();
+                        string apiData = ReadStr();
+
+                        //todo ?
+                        break;
+                    }
+                case IncomingMessage.VerifyCompleted:
+                    {
+                        int msgVersion = ReadInt();
+                        bool isSuccessful = String.Compare(ReadStr(), "true", true) == 0;
+                        string errorText = ReadStr();
+
+                        //todo?
+                        break;
+                    }
+                case IncomingMessage.DisplayGroupList:
+                    {
+                        int msgVersion = ReadInt();
+                        int reqId = ReadInt();
+                        string groups = ReadStr();
+
+                        displayGroupList(reqId, groups);
+                        break;
+                    }
+                case IncomingMessage.DisplayGroupUpdated:
+                    {
+                        int msgVersion = ReadInt();
+                        int reqId = ReadInt();
+                        string contractInfo = ReadStr();
+
+                        displayGroupUpdated(reqId, contractInfo);
+                        break;
+                    }
+                case IncomingMessage.VerifyAndAuthMessageApi:
+                    {
+                        int msgVersion = ReadInt();
+                        string apiData = ReadStr();
+                        string xyzChallenge = ReadStr();
+
+                        verifyAndAuthMessageAPI(apiData, xyzChallenge);
+                        break;
+                    }
+                case IncomingMessage.VerifyAndAuthCompleted:
+                    {
+                        int msgVersion = ReadInt();
+                        bool isSuccessful = String.Compare(ReadStr(), "true", true) == 0;
+                        string errorText = ReadStr();
+
+                        //if (isSuccessful)
+                        //    parent.startApi();
+                        //todo ?
+
+                        break;
+                    }
+                case IncomingMessage.PositionMulti:
+                    {
+                        int msgVersion = ReadInt();
+                        int requestId = ReadInt();
+                        string account = ReadStr();
+                        Contract contract = new Contract();
+                        contract.ContractId = ReadInt();
+                        contract.Symbol = ReadStr();
+                        contract.SecurityType = (SecurityType)EnumDescConverter.GetEnumValue(typeof(SecurityType), ReadStr());
+                        contract.Expiry = ReadStr();
+                        contract.Strike = ReadDouble();
+                        contract.Right = (RightType)EnumDescConverter.GetEnumValue(typeof(RightType), ReadStr());
+                        contract.Multiplier = ReadStr();
+                        contract.Exchange = ReadStr();
+                        contract.Currency = ReadStr();
+                        contract.LocalSymbol = ReadStr();
+                        contract.TradingClass = ReadStr();
+                        var pos = ReadDouble();
+                        double avgCost = ReadDouble();
+                        string modelCode = ReadStr();
+
+                        positionMulti(requestId, account, modelCode, contract, pos, avgCost);
+                        break;
+                    }
+                case IncomingMessage.PositionMultiEnd:
+                    {
+                        int msgVersion = ReadInt();
+                        int requestId = ReadInt();
+
+                        positionMultiEnd(requestId);
+                        break;
+                    }
+                case IncomingMessage.AccountUpdateMulti:
+                    {
+                        int msgVersion = ReadInt();
+                        int requestId = ReadInt();
+                        string account = ReadStr();
+                        string modelCode = ReadStr();
+                        string key = ReadStr();
+                        string value = ReadStr();
+                        string currency = ReadStr();
+
+                        accountUpdateMulti(requestId, account, modelCode, key, value, currency);
+                        break;
+                    }
+                case IncomingMessage.AccountUpdateMultiEnd:
+                    {
+                        int msgVersion = ReadInt();
+                        int requestId = ReadInt();
+
+                        accountUpdateMultiEnd(requestId);
+                        break;
+                    }
+                case IncomingMessage.SecurityDefinitionOptionParameter:
+                    {
+                        int reqId = ReadInt();
+                        string exchange = ReadStr();
+                        int underlyingConId = ReadInt();
+                        string tradingClass = ReadStr();
+                        string multiplier = ReadStr();
+                        int expirationsSize = ReadInt();
+                        List<string> expirations = new List<string>();
+                        List<double> strikes = new List<double>();
+
+                        for (int i = 0; i < expirationsSize; i++)
+                        {
+                            expirations.Add(ReadStr());
+                        }
+
+                        int strikesSize = ReadInt();
+
+                        for (int i = 0; i < strikesSize; i++)
+                        {
+                            strikes.Add(ReadDouble());
+                        }
+
+                        securityDefinitionOptionParameter(reqId, exchange, underlyingConId, tradingClass, multiplier, expirations, strikes);
+                        break;
+                    }
+                case IncomingMessage.SecurityDefinitionOptionParameterEnd:
+                    {
+                        int reqId = ReadInt();
+
+                        securityDefinitionOptionParameterEnd(reqId);
                         break;
                     }
                 default:

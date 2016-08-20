@@ -18,7 +18,7 @@ namespace Krs.Ats.IBNet
         private int orderId;
         private int permId;
         private double price;
-        private int shares;
+        private double shares;
         private ExecutionSide side;
         private String time;
         private int cumQuantity;
@@ -151,7 +151,7 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// The number of shares filled.
         /// </summary>
-        public int Shares
+        public double Shares
         {
             get { return shares; }
             set { shares = value; }
@@ -220,6 +220,8 @@ namespace Krs.Ats.IBNet
         /// EvMultiplier.
         /// </summary>
         public double EvMultipler { get; set; }
+
+        public string ModelCode { get; set; }
 
         #endregion
     }

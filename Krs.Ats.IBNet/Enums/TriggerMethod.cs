@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 
 namespace Krs.Ats.IBNet
 {
@@ -11,6 +12,7 @@ namespace Krs.Ats.IBNet
         /// <summary>
         /// 0 - the default value. The "double bid/ask" method will be used for orders for OTC stocks and US options. All other orders will used the "last" method.
         /// </summary>
+        [Description("Default")]
         Default = 0,
         /// <summary>
         /// 1 - use "double bid/ask" method, where stop orders are triggered based on two consecutive bid or ask prices.

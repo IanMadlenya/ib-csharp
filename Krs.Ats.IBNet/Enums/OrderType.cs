@@ -37,6 +37,10 @@ namespace Krs.Ats.IBNet
         /// </summary>
         [Description("PEGMKT")] PeggedToMarket,
         /// <summary>
+        /// The Pegged to Benchmark order is similar to the Pegged to Stock order for options, except that the Pegged to Benchmark allows you to specify any asset type as the reference (benchmark) contract for a stock or option order. Both the primary and reference contracts must use the same currency.
+        /// </summary>
+        [Description("PEG BENCH")] PeggedToBenchmark,
+        /// <summary>
         /// A Stop order becomes a market order to buy or sell securities or commodities once the specified stop price is attained or penetrated.
         /// Forex, Futures, Future Options, Options, Stocks, Warrants
         /// </summary>
